@@ -1,12 +1,58 @@
-# React + Vite
+# 🛍️ Ramro – E-commerce Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Ramro is a modern e-commerce web application built using React, Tailwind CSS, and Vite. The goal is to provide a clean, performant, and responsive UI for online product listings.
 
-Currently, two official plugins are available:
+## 🚀 Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- 📦 Product Cards with image, name, and price
+- 🖱️ Hover effect and "Add to Cart" button (UI only for now)
+- 🌐 Fully responsive layout (mobile-first)
+- 🧪 Clean code architecture (Component-based)
+- 🔐 GitHub integration with private repo
 
-## Expanding the ESLint configuration
+## 🛠️ Tech Stack
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend:** React + Vite
+- **Styling:** Tailwind CSS
+- **Version Control:** Git + GitHub
+
+## 📁 Folder Structure
+
+ramro/
+├── public/
+├── src/
+│ ├── components/
+│ │ └── ProductCard.jsx
+│ ├── pages/
+│ │ └── Home.jsx
+│ └── App.jsx
+├── index.html
+├── package.json
+└── tailwind.config.js
+
+yaml
+Copy
+Edit
+
+## 🛒 Upcoming Features
+
+- Functional Add to Cart + Cart page
+- Product filtering and search
+- User authentication
+- Image storage with Cloudinary or S3
+- Checkout and payment integration
+
+---
+
+## 📦 Installation
+
+```bash
+git clone https://github.com/anathema43/Ramro.git
+cd Ramro
+npm install
+npm run dev
+📸 Demo
+Coming soon...
+
+🔒 License
+This project is private and not intended for public use at this time.
