@@ -1,110 +1,85 @@
 import React, { useState, useEffect } from "react";
+import { allProducts } from "../data/products.js";
 import ProductCard from "../components/ProductCard";
-import HeroSection from "../components/HeroSection";
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { allProducts } from "../data/products";
 
-const Home = ({ showMessage }) => { // allProducts is now a global constant
+const Home = ({ showMessage }) => {
   const categories = ["All", "Pickle", "Cold Cuts", "Tea", "Ready to Eat", "Noodles"];
-
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sortOrder, setSortOrder] = useState("default"); // New state for sorting
+  const [sortOrder, setSortOrder] = useState("default");
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
   useEffect(() => {
-    let currentProducts = [...allProducts]; // Create a mutable copy
-
+    let currentProducts = [...allProducts];
     if (selectedCategory !== "All") {
-      currentProducts = currentProducts.filter(
-        (product) => product.category === selectedCategory
-      );
+      currentProducts = currentProducts.filter(p => p.category === selectedCategory);
     }
-
     if (searchTerm) {
-      currentProducts = currentProducts.filter((product) =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      currentProducts = currentProducts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     }
-
-    // Apply sorting
-    if (sortOrder === "price-asc") {
-      currentProducts.sort((a, b) => a.price - b.price);
-    } else if (sortOrder === "price-desc") {
-      currentProducts.sort((a, b) => b.price - a.price);
-    } else if (sortOrder === "name-asc") {
-      currentProducts.sort((a, b) => a.name.localeCompare(b.name));
-    }
-
+    if (sortOrder === "price-asc") currentProducts.sort((a, b) => a.price - b.price);
+    if (sortOrder === "price-desc") currentProducts.sort((a, b) => b.price - a.price);
+    if (sortOrder === "name-asc") currentProducts.sort((a, b) => a.name.localeCompare(b.name));
     setFilteredProducts(currentProducts);
-  }, [searchTerm, selectedCategory, sortOrder]); // allProducts is global, no need in dependency array
-
-  const HERO_BACKGROUND_IMAGE = "https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752940186/darjeeling_qicpwi.avif"; // Centralized image URL
+  }, [searchTerm, selectedCategory, sortOrder]);
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
-      <HeroSection 
-        title="Our Shop" 
-        imageSrc={HERO_BACKGROUND_IMAGE} // Used centralized image
-        heightClass="h-72"
-      />
-
-      <div className="container mx-auto p-6 sm:p-8 lg:p-10 bg-white rounded-lg shadow-lg my-8 text-stone-900">
-        {/* Search Bar with Icon and Clear Button */}
-        <div className="mb-8 relative">
+      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl sm:text-5xl font-bold text-stone-800">Our Products</h1>
+          <p className="text-stone-600 mt-2">Authentic tastes from the heart of the Himalayas.</p>
+        </div>
+        
+        <div className="mb-8 relative max-w-lg mx-auto">
           <input
             type="text"
-            placeholder="Search products..."
-            className="w-full p-3 pl-10 rounded-md bg-stone-200 text-stone-800 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            placeholder="Search for pickles, tea, snacks..."
+            className="w-full p-3 pl-10 rounded-full bg-white text-stone-800 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            aria-label="Search products"
           />
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-500">
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">
             <MagnifyingGlassIcon className="w-5 h-5" />
           </span>
           {searchTerm && (
             <button
               onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700 focus:outline-none"
-              aria-label="Clear search"
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-stone-500 hover:text-stone-700"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
           )}
         </div>
 
-        {/* Main Content Area: Categories (left) and Products (right) */}
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Category Filter Buttons - Vertical on md+, Horizontal scrollable on mobile */}
-          <div className="md:w-1/4 lg:w-1/5 flex-shrink-0">
-            <h3 className="text-xl font-bold mb-4 text-stone-800">Categories</h3>
-            <div className="flex md:flex-col gap-3 md:space-y-2 md:space-x-0 overflow-x-auto pb-2 md:pb-0">
+          <aside className="md:w-1/4 lg:w-1/5">
+             <h3 className="text-xl font-bold mb-4 text-stone-800">Categories</h3>
+            <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible pb-2">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-5 py-2 rounded-full font-semibold transition-colors duration-200 whitespace-nowrap active:scale-95
+                  className={`w-full text-left px-4 py-2 rounded-md font-semibold transition-colors duration-200 whitespace-nowrap
                     ${selectedCategory === category
-                      ? "bg-amber-600 text-white shadow-md"
-                      : "bg-stone-200 text-stone-700 hover:bg-stone-300 hover:text-stone-900"
+                      ? "bg-amber-600 text-white shadow-sm"
+                      : "bg-transparent text-stone-700 hover:bg-stone-200"
                     }`}
                 >
-                  {category} ({allProducts.filter(p => category === "All" || p.category === category).length})
+                  {category}
                 </button>
               ))}
-            </div>
-          </div>
+            </nav>
+          </aside>
 
-          {/* Product Grid */}
-          <div className="flex-1">
-            {/* Sort Dropdown */}
-            <div className="mb-6 flex justify-end">
+          <main className="flex-1">
+            <div className="mb-6 flex justify-between items-center">
+              <p className="text-stone-600">{filteredProducts.length} Products</p>
               <select
-                className="p-2 rounded-md bg-stone-200 text-stone-800 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="p-2 rounded-md bg-white text-stone-800 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value)}
-                aria-label="Sort products by"
               >
                 <option value="default">Sort by</option>
                 <option value="price-asc">Price: Low to High</option>
@@ -114,15 +89,17 @@ const Home = ({ showMessage }) => { // allProducts is now a global constant
             </div>
 
             {filteredProducts.length === 0 ? (
-              <p className="text-center text-xl text-stone-600 mt-10">No products found for your selection.</p>
+              <div className="text-center py-16">
+                <p className="text-xl text-stone-600">No products found matching your criteria.</p>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((p) => (
-                  <ProductCard key={p.id} {...p} showMessage={showMessage} />
+                  <ProductCard key={p.id} {...p} />
                 ))}
               </div>
             )}
-          </div>
+          </main>
         </div>
       </div>
     </div>
