@@ -7,7 +7,7 @@ const Cart = ({ showMessage }) => {
   const { cart, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = useCartStore();
   const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const quantityRef = useRef([]);
+  const quantityRefs = useRef([]);
 
   const handleQuantityChange = (action, itemId, index) => {
     if (action === 'increase') {
@@ -17,11 +17,11 @@ const Cart = ({ showMessage }) => {
       decreaseQuantity(itemId);
       showMessage(`Quantity updated!`, 'success');
     }
-    if (quantityRef.current[index]) {
-      quantityRef.current[index].classList.add('animate-flash-bg');
+    if (quantityRefs.current[index]) {
+      quantityRefs.current[index].classList.add('animate-flash-bg');
       setTimeout(() => {
-        if (quantityRef.current[index]) {
-          quantityRef.current[index].classList.remove('animate-flash-bg');
+        if (quantityRefs.current[index]) {
+          quantityRefs.current[index].classList.remove('animate-flash-bg');
         }
       }, 300);
     }
@@ -59,15 +59,15 @@ const Cart = ({ showMessage }) => {
                   <p className="text-amber-600 font-bold">Rs. {item.price.toFixed(2)}</p>
                   <div className="flex items-center justify-center sm:justify-start gap-3 mt-3">
                     <button
-                      onClick={() => decreaseQuantity(item.id)}
+                      onClick={() => handleQuantityChange('decrease', item.id, index)}
                       className="px-3 py-1 border border-stone-300 rounded-md text-stone-700 hover:bg-stone-200 transition-colors active:scale-95"
                       aria-label={`Decrease quantity of ${item.name}`}
                     >
                       -
                     </button>
-                    <span ref={el => quantityRef.current[index] = el} className="text-lg font-medium transition-colors duration-200">{item.quantity}</span>
+                    <span ref={el => quantityRefs.current[index] = el} className="text-lg font-medium transition-colors duration-200">{item.quantity}</span>
                     <button
-                      onClick={() => increaseQuantity(item.id)}
+                      onClick={() => handleQuantityChange('increase', item.id, index)}
                       className="px-3 py-1 border border-stone-300 rounded-md text-stone-700 hover:bg-stone-200 transition-colors active:scale-95"
                       aria-label={`Increase quantity of ${item.name}`}
                     >

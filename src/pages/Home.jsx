@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import ProductCard from "../components/ProductCard";
 import HeroSection from "../components/HeroSection";
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { allProducts } from "../data/products";
 
-const Home = ({ allProducts, showMessage }) => {
+const Home = ({ showMessage }) => {
   const categories = ["All", "Pickle", "Cold Cuts", "Tea", "Ready to Eat", "Noodles"];
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -35,7 +36,7 @@ const Home = ({ allProducts, showMessage }) => {
     }
 
     setFilteredProducts(currentProducts);
-  }, [searchTerm, selectedCategory, sortOrder, allProducts]);
+  }, [searchTerm, selectedCategory, sortOrder]);
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
@@ -46,7 +47,6 @@ const Home = ({ allProducts, showMessage }) => {
       />
 
       <div className="container mx-auto p-6 sm:p-8 lg:p-10">
-        {/* Search Bar with Icon and Clear Button */}
         <div className="mb-8 relative">
           <input
             type="text"
@@ -70,9 +70,7 @@ const Home = ({ allProducts, showMessage }) => {
           )}
         </div>
 
-        {/* Main Content Area: Categories (left) and Products (right) */}
         <div className="flex flex-col md:flex-row gap-8">
-          {/* Category Filter Buttons - Vertical on md+, Horizontal scrollable on mobile */}
           <div className="md:w-1/4 lg:w-1/5 flex-shrink-0">
             <h3 className="text-xl font-bold mb-4 hidden md:block">Categories</h3>
             <div className="flex md:flex-col gap-3 md:space-y-2 md:space-x-0 overflow-x-auto pb-2 md:pb-0">
@@ -92,9 +90,7 @@ const Home = ({ allProducts, showMessage }) => {
             </div>
           </div>
 
-          {/* Product Grid */}
           <div className="flex-1">
-            {/* Sort Dropdown */}
             <div className="mb-6 flex justify-end">
               <select
                 className="p-2 rounded-md bg-stone-200 text-stone-800 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
@@ -114,7 +110,7 @@ const Home = ({ allProducts, showMessage }) => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((p) => (
-                  <ProductCard key={p.id} {...p} />
+                  <ProductCard key={p.id} {...p} showMessage={showMessage} />
                 ))}
               </div>
             )}

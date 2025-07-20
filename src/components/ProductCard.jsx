@@ -2,12 +2,11 @@ import React, { useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useCartStore } from "../store/cartStore";
 
-// Image Loading Skeleton Component (defined here for ProductCard's scope)
 const ImageSkeleton = () => (
   <div className="absolute inset-0 bg-gray-300 animate-pulse"></div>
 );
 
-const ProductCard = ({ id, name, price, image }) => {
+const ProductCard = ({ id, name, price, image, showMessage }) => {
   const { addToCart, increaseQuantity, decreaseQuantity, cart } = useCartStore();
   const itemInCart = cart.find(item => item.id === id);
 
@@ -17,6 +16,7 @@ const ProductCard = ({ id, name, price, image }) => {
   const handleAddToCart = (product) => {
     addToCart(product);
     setAddedToCartFeedback(true);
+    showMessage(`'${product.name}' added to cart!`, 'success');
     setTimeout(() => setAddedToCartFeedback(false), 1000);
   };
 
@@ -26,6 +26,7 @@ const ProductCard = ({ id, name, price, image }) => {
     } else {
       decreaseQuantity(itemId);
     }
+    showMessage(`Quantity of '${name}' updated!`, 'success');
     if (quantityRef.current) {
       quantityRef.current.classList.add('animate-flash-bg');
       setTimeout(() => {
@@ -48,6 +49,7 @@ const ProductCard = ({ id, name, price, image }) => {
             alt={name}
             className={`h-48 w-full object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
             onLoad={() => setImageLoaded(true)}
+            onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/400x300/334155/f8fafc?text=Image+Error`; }}
           />
         </div>
         <div className="p-4">
@@ -79,8 +81,8 @@ const ProductCard = ({ id, name, price, image }) => {
             <button
               onClick={() => handleAddToCart({ id, name, price, image })}
               className={`bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700 transition-colors duration-200 w-full active:scale-95
-                         focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50
-                         ${addedToCartFeedback ? 'bg-green-600' : ''}`}
+                           focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50
+                           ${addedToCartFeedback ? 'bg-green-600' : ''}`}
               disabled={addedToCartFeedback}
               aria-label={`Add ${name} to cart`}
             >

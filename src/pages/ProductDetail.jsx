@@ -2,13 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useCartStore } from "../store/cartStore";
 import HeroSection from "../components/HeroSection";
+import { allProducts } from "../data/products";
 
-// Image Loading Skeleton Component (defined here for ProductDetail's scope)
 const ImageSkeleton = () => (
   <div className="absolute inset-0 bg-gray-300 animate-pulse"></div>
 );
 
-const ProductDetail = ({ allProducts, showMessage }) => {
+const ProductDetail = ({ showMessage }) => {
   const { id } = useParams();
   const product = allProducts.find(p => p.id === parseInt(id));
 
@@ -18,7 +18,7 @@ const ProductDetail = ({ allProducts, showMessage }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
-    window.scrollTo(0, 0); // Scroll to top when product detail page loads
+    window.scrollTo(0, 0);
   }, [id]);
 
   if (!product) {
@@ -60,8 +60,9 @@ const ProductDetail = ({ allProducts, showMessage }) => {
             <img
               src={product.image}
               alt={product.name}
-              className={`w-full h-auto object-cover rounded-lg shadow-md ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`w-full h-auto object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImageLoaded(true)}
+              onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/600x450/334155/f8fafc?text=Image+Error`; }}
             />
           </div>
           <div className="md:w-1/2">
@@ -99,7 +100,7 @@ const ProductDetail = ({ allProducts, showMessage }) => {
                 <button
                   onClick={() => handleAddToCart(product)}
                   className="bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 w-full active:scale-95
-                             focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
+                               focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50"
                   aria-label={`Add ${product.name} to cart`}
                 >
                   Add to Cart
