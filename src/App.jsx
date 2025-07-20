@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { HashRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 
-// Firebase Imports
+// Firebase Imports (for local environment)
+// These imports are crucial for Firebase to work.
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore"; // Ensure all Firestore functions are imported
 
 // Import all page components
 import LandingPage from "./pages/LandingPage.jsx";
@@ -21,6 +22,8 @@ import AppMessage from "./components/AppMessage.jsx";
 
 // Import Zustand stores
 import { useAuthStore } from "./store/authStore.js";
+// Import product data
+import { allProducts } from "./data/products.js";
 
 
 // AuthRedirector component (must be a child of Router)
@@ -83,6 +86,7 @@ const App = () => {
       authInstance = getAuth(firebaseApp);
       dbInstance = getFirestore(firebaseApp);
 
+      // Set Firebase instances and functions in Zustand store
       setFirebaseInstances(
         authInstance, 
         dbInstance, 
@@ -93,21 +97,26 @@ const App = () => {
         signOut, 
         doc, 
         setDoc, 
-        getDoc
+        getDoc,
+        collection, // Passed collection
+        getDocs,    // Passed getDocs
+        deleteDoc   // Passed deleteDoc
       );
 
-      signInAnonymously(authInstance)
-        .then(() => console.log("Signed in anonymously or already authenticated."))
-        .catch(error => console.error("Anonymous sign-in failed:", error));
+      // Removed signInAnonymously and signInWithCustomToken logic.
+      // Users must now explicitly login or signup.
+      // The onAuthStateChanged listener will handle persistent sessions after initial login.
       
+      // Start listening to auth state changes
       listenToAuthChanges();
 
     } catch (error) {
       console.error("Firebase initialization error:", error);
       showMessage("Firebase setup failed. Auth will not work.", "error");
     }
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
+  // Ensure body background matches app background (for local consistency)
   useEffect(() => {
     document.body.style.backgroundColor = '#292524';
     document.body.style.fontFamily = 'Inter, sans-serif';
@@ -135,6 +144,9 @@ const App = () => {
             <Route path="/cart" element={<Cart showMessage={showMessage} />} />
             <Route path="/login" element={<Login showMessage={showMessage} />} />
             <Route path="/signup" element={<Signup showMessage={showMessage} />} />
+            {/* AccountPage is a placeholder for now */}
+            <Route path="/account" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">Account Page - Coming Soon!</h1></div>} />
+            {/* Placeholder pages for About and Contact */}
             <Route path="/about" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">About Us Page - Coming Soon!</h1></div>} />
             <Route path="/contact" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">Contact Us Page - Coming Soon!</h1></div>} />
           </Routes>

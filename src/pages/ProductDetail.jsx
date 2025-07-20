@@ -8,7 +8,7 @@ const ImageSkeleton = () => (
   <div className="absolute inset-0 bg-gray-300 animate-pulse"></div>
 );
 
-const ProductDetail = ({ showMessage }) => {
+const ProductDetail = ({ showMessage }) => { // allProducts is now a global constant
   const { id } = useParams();
   const product = allProducts.find(p => p.id === parseInt(id));
 
@@ -43,14 +43,16 @@ const ProductDetail = ({ showMessage }) => {
     showMessage(`Quantity of '${product.name}' updated!`, 'success');
   };
 
+  const HERO_BACKGROUND_IMAGE = "https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752940186/darjeeling_qicpwi.avif"; // Centralized image URL
+
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
       <HeroSection 
         title={product.name} 
-        imageSrc={product.image}
+        imageSrc={HERO_BACKGROUND_IMAGE} // Used centralized image
         heightClass="h-72"
       />
-      <div className="container mx-auto p-6 sm:p-8 lg:p-10 bg-white rounded-lg shadow-lg my-8">
+      <div className="container mx-auto p-6 sm:p-8 lg:p-10 bg-white rounded-lg shadow-lg my-8 text-stone-900">
         <Link to="/products" className="text-amber-600 hover:underline mb-4 inline-block active:scale-95">
           &larr; Back to Shop
         </Link>
@@ -60,7 +62,7 @@ const ProductDetail = ({ showMessage }) => {
             <img
               src={product.image}
               alt={product.name}
-              className={`w-full h-auto object-cover ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`w-full h-auto object-cover rounded-lg shadow-md ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
               onLoad={() => setImageLoaded(true)}
               onError={(e) => { e.target.onerror = null; e.target.src = `https://placehold.co/600x450/334155/f8fafc?text=Image+Error`; }}
             />
@@ -81,7 +83,7 @@ const ProductDetail = ({ showMessage }) => {
               {itemInCart ? (
                 <div className="flex items-center gap-3 w-full justify-center sm:justify-start">
                   <button
-                    onClick={() => handleQuantityChange('decrease', product.id)}
+                    onClick={() => decreaseQuantity(product.id)}
                     className="px-4 py-2 border border-amber-600 text-amber-600 rounded-md hover:bg-amber-600 hover:text-white transition-colors active:scale-95"
                     aria-label={`Decrease quantity of ${product.name}`}
                   >
@@ -89,7 +91,7 @@ const ProductDetail = ({ showMessage }) => {
                   </button>
                   <span className="text-xl font-medium">{itemInCart.quantity}</span>
                   <button
-                    onClick={() => handleQuantityChange('increase', product.id)}
+                    onClick={() => increaseQuantity(product.id)}
                     className="px-4 py-2 border border-amber-600 text-amber-600 rounded-md hover:bg-amber-600 hover:text-white transition-colors active:scale-95"
                     aria-label={`Increase quantity of ${product.name}`}
                   >

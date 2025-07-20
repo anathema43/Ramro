@@ -1,5 +1,8 @@
 import { create } from "zustand";
-// Firebase imports will be handled in App.jsx where they are initialized
+// FIX: Import useCartStore here
+import { useCartStore } from './cartStore';
+
+// Firebase functions are passed from App.jsx where they are initialized
 // We declare them here so Zustand store can use them via setFirebaseInstances
 let firebaseAuth = null;
 let firebaseDb = null;
@@ -11,6 +14,9 @@ let firebaseSignOut = null;
 let firebaseDoc = null;
 let firebaseSetDoc = null;
 let firebaseGetDoc = null;
+let firebaseCollection = null; // Added for Firestore collection queries
+let firebaseGetDocs = null; // Added for Firestore collection queries
+let firebaseDeleteDoc = null; // Added for Firestore document deletion
 
 
 export const useAuthStore = create((set, get) => ({
@@ -21,7 +27,7 @@ export const useAuthStore = create((set, get) => ({
   authLoading: false,
 
   // Action to set Firebase Auth and Firestore instances from App.jsx
-  setFirebaseInstances: (auth, db, currentAppId, onAuthStateChangedFn, signInWithEmailAndPasswordFn, createUserWithEmailAndPasswordFn, signOutFn, docFn, setDocFn, getDocFn) => {
+  setFirebaseInstances: (auth, db, currentAppId, onAuthStateChangedFn, signInWithEmailAndPasswordFn, createUserWithEmailAndPasswordFn, signOutFn, docFn, setDocFn, getDocFn, collectionFn, getDocsFn, deleteDocFn) => {
     firebaseAuth = auth;
     firebaseDb = db;
     appId = currentAppId;
@@ -32,6 +38,9 @@ export const useAuthStore = create((set, get) => ({
     firebaseDoc = docFn;
     firebaseSetDoc = setDocFn;
     firebaseGetDoc = getDocFn;
+    firebaseCollection = collectionFn; // Set collection function
+    firebaseGetDocs = getDocsFn; // Set getDocs function
+    firebaseDeleteDoc = deleteDocFn; // Set deleteDoc function
   },
 
   // Login action using Firebase Auth
@@ -61,6 +70,10 @@ export const useAuthStore = create((set, get) => ({
         user: userData,
         authError: null,
       });
+
+      // Load cart after successful login
+      useCartStore.getState().loadCartFromFirestore(user.uid, firebaseDb, appId, firebaseDoc, firebaseGetDoc, firebaseSetDoc);
+
       return { success: true };
     } catch (error) {
       let errorMessage = 'Login failed.';
@@ -87,7 +100,6 @@ export const useAuthStore = create((set, get) => ({
   signup: async (name, email, password) => {
     console.log("Attempting signup for:", email); // Debug log
     if (!firebaseAuth || !firebaseDb || !appId) {
-      console.error("Firebase instances not available for signup."); // Debug log
       set({ authError: 'Firebase not initialized.' });
       return { success: false, error: 'Firebase not initialized.' };
     }
@@ -117,6 +129,10 @@ export const useAuthStore = create((set, get) => ({
         user: { ...userProfile, uid: user.uid },
         authError: null,
       });
+
+      // Save empty cart to Firestore for new user
+      useCartStore.getState().saveCartToFirestore(user.uid, [], firebaseDb, appId, firebaseDoc, firebaseSetDoc);
+
       console.log("Signup successful!"); // Debug log
       return { success: true };
     } catch (error) {
@@ -148,7 +164,13 @@ export const useAuthStore = create((set, get) => ({
       await firebaseSignOut(firebaseAuth);
     }
     set({ isLoggedIn: false, userToken: null, user: null, authError: null });
-    useCartStore.getState().clearCart(); // Correctly access clearCart from useCartStore directly
+    // When logging out, clear the local cart, but also save current cart to Firestore if user was logged in
+    const currentCart = useCartStore.getState().cart;
+    const currentUser = get().user; // Get user before it's cleared by set()
+    if (currentUser && currentCart.length > 0) { // Only save if user was logged in and cart not empty
+        useCartStore.getState().saveCartToFirestore(currentUser.uid, currentCart, firebaseDb, appId, firebaseDoc, firebaseSetDoc);
+    }
+    useCartStore.getState().clearCart(); // Clear local cart after saving (or if not logged in)
   },
 
   // Listener for Firebase Auth state changes
@@ -168,8 +190,20 @@ export const useAuthStore = create((set, get) => ({
           userData = { ...userDocSnap.data(), uid: user.uid, email: user.email };
         }
         set({ isLoggedIn: true, userToken: await user.getIdToken(), user: userData });
+
+        // Load cart from Firestore when user logs in/auth state changes to logged in
+        useCartStore.getState().loadCartFromFirestore(user.uid, firebaseDb, appId, firebaseDoc, firebaseGetDoc, firebaseSetDoc);
+
       } else {
+        // User is signed out
+        // Save current cart to Firestore before clearing if user was just logged out
+        const currentUser = get().user; // Get user before it's cleared by set()
+        const currentCart = useCartStore.getState().cart;
+        if (currentUser && currentCart.length > 0) { // Only save if user was logged in and cart not empty
+            useCartStore.getState().saveCartToFirestore(currentUser.uid, currentCart, firebaseDb, appId, firebaseDoc, firebaseSetDoc);
+        }
         set({ isLoggedIn: false, userToken: null, user: null });
+        useCartStore.getState().clearCart(); // Clear local cart
       }
     });
   }

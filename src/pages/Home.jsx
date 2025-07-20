@@ -4,16 +4,16 @@ import HeroSection from "../components/HeroSection";
 import { MagnifyingGlassIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import { allProducts } from "../data/products";
 
-const Home = ({ showMessage }) => {
+const Home = ({ showMessage }) => { // allProducts is now a global constant
   const categories = ["All", "Pickle", "Cold Cuts", "Tea", "Ready to Eat", "Noodles"];
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sortOrder, setSortOrder] = useState("default");
+  const [sortOrder, setSortOrder] = useState("default"); // New state for sorting
   const [filteredProducts, setFilteredProducts] = useState(allProducts);
 
   useEffect(() => {
-    let currentProducts = [...allProducts];
+    let currentProducts = [...allProducts]; // Create a mutable copy
 
     if (selectedCategory !== "All") {
       currentProducts = currentProducts.filter(
@@ -27,6 +27,7 @@ const Home = ({ showMessage }) => {
       );
     }
 
+    // Apply sorting
     if (sortOrder === "price-asc") {
       currentProducts.sort((a, b) => a.price - b.price);
     } else if (sortOrder === "price-desc") {
@@ -36,17 +37,20 @@ const Home = ({ showMessage }) => {
     }
 
     setFilteredProducts(currentProducts);
-  }, [searchTerm, selectedCategory, sortOrder]);
+  }, [searchTerm, selectedCategory, sortOrder]); // allProducts is global, no need in dependency array
+
+  const HERO_BACKGROUND_IMAGE = "https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752940186/darjeeling_qicpwi.avif"; // Centralized image URL
 
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
       <HeroSection 
         title="Our Shop" 
-        imageSrc="https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752940186/darjeeling_qicpwi.avif"
+        imageSrc={HERO_BACKGROUND_IMAGE} // Used centralized image
         heightClass="h-72"
       />
 
-      <div className="container mx-auto p-6 sm:p-8 lg:p-10">
+      <div className="container mx-auto p-6 sm:p-8 lg:p-10 bg-white rounded-lg shadow-lg my-8 text-stone-900">
+        {/* Search Bar with Icon and Clear Button */}
         <div className="mb-8 relative">
           <input
             type="text"
@@ -70,9 +74,11 @@ const Home = ({ showMessage }) => {
           )}
         </div>
 
+        {/* Main Content Area: Categories (left) and Products (right) */}
         <div className="flex flex-col md:flex-row gap-8">
+          {/* Category Filter Buttons - Vertical on md+, Horizontal scrollable on mobile */}
           <div className="md:w-1/4 lg:w-1/5 flex-shrink-0">
-            <h3 className="text-xl font-bold mb-4 hidden md:block">Categories</h3>
+            <h3 className="text-xl font-bold mb-4 text-stone-800">Categories</h3>
             <div className="flex md:flex-col gap-3 md:space-y-2 md:space-x-0 overflow-x-auto pb-2 md:pb-0">
               {categories.map((category) => (
                 <button
@@ -90,7 +96,9 @@ const Home = ({ showMessage }) => {
             </div>
           </div>
 
+          {/* Product Grid */}
           <div className="flex-1">
+            {/* Sort Dropdown */}
             <div className="mb-6 flex justify-end">
               <select
                 className="p-2 rounded-md bg-stone-200 text-stone-800 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"

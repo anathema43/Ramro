@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Removed Router import
 import HeroSection from "../components/HeroSection";
 import { useAuthStore } from "../store/authStore";
 
@@ -43,14 +43,16 @@ const Signup = ({ showMessage }) => {
     }
   };
 
+  const HERO_BACKGROUND_IMAGE = "https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752940186/darjeeling_qicpwi.avif";
+
   return (
     <div className="min-h-screen bg-stone-100 text-stone-900">
       <HeroSection
         title="Join Ramro"
-        imageSrc="https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752940186/tea_field_bg_v49v3u.avif"
+        imageSrc={HERO_BACKGROUND_IMAGE}
         heightClass="h-72"
       />
-      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg my-8">
+      <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-lg my-8 text-stone-900">
         <h1 className="text-3xl font-bold mb-6 text-center text-stone-800">Create Your Account</h1>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

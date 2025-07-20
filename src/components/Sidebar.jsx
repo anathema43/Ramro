@@ -28,6 +28,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         <Link to="/about" className="hover:text-amber-400 transition-colors" onClick={onClose}>About</Link>
         <Link to="/contact" className="hover:text-amber-400 transition-colors" onClick={onClose}>Contact</Link>
         
+        {/* Auth Links for Mobile Sidebar */}
         {isLoggedIn ? (
           <>
             {/* User Profile Display in Sidebar - Clickable */}

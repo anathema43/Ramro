@@ -17,7 +17,7 @@ const AppMessage = ({ message, type, onClose }) => {
   const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
 
   return (
-    <div className={`fixed top-4 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-lg text-white z-50 ${bgColor} animate-fade-in-down`}>
+    <div className={`fixed top-4 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-lg text-white z-50 animate-fade-in-down`}>
       {message}
     </div>
   );

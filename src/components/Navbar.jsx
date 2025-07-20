@@ -16,16 +16,19 @@ const Navbar = ({ onMenuClick }) => {
   return (
     <nav className="bg-stone-800 text-white p-4 shadow-lg sticky top-0 z-40 animate-fade-in-down">
       <div className="container mx-auto flex justify-between items-center">
+        {/* Logo/Brand */}
         <Link to="/" className="text-2xl font-bold text-amber-500 hover:text-amber-400 transition-colors">
           Ramro
         </Link>
 
+        {/* Desktop Navigation Links */}
         <div className="hidden md:flex space-x-6 items-center">
           <Link to="/" className="hover:text-amber-400 transition-colors">Home</Link>
           <Link to="/products" className="hover:text-amber-400 transition-colors">Shop</Link>
           <Link to="/about" className="hover:text-amber-400 transition-colors">About</Link>
           <Link to="/contact" className="hover:text-amber-400 transition-colors">Contact</Link>
           
+          {/* Cart Icon */}
           <Link to="/cart" className="relative hover:text-amber-400 transition-colors">
             <ShoppingCartIcon className="w-6 h-6" />
             {totalItemsInCart > 0 && (
@@ -35,6 +38,7 @@ const Navbar = ({ onMenuClick }) => {
             )}
           </Link>
 
+          {/* Auth Links */}
           {isLoggedIn ? (
             <>
               {/* User Profile Display in Navbar - Clickable */}
@@ -68,6 +72,7 @@ const Navbar = ({ onMenuClick }) => {
           )}
         </div>
 
+        {/* Mobile Menu Button and Cart Icon */}
         <div className="md:hidden flex items-center space-x-4">
           <Link to="/cart" className="relative text-white hover:text-amber-400 transition-colors">
             <ShoppingCartIcon className="w-6 h-6" />
