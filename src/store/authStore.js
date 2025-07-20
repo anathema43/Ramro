@@ -1,6 +1,6 @@
 import { create } from "zustand";
-// FIX: Import useCartStore here
-import { useCartStore } from './cartStore';
+// FIX: Removed direct import of useCartStore to break circular dependency
+// import { useCartStore } from './cartStore'; // REMOVED THIS LINE
 
 // Firebase functions are passed from App.jsx where they are initialized
 // We declare them here so Zustand store can use them via setFirebaseInstances
@@ -14,9 +14,9 @@ let firebaseSignOut = null;
 let firebaseDoc = null;
 let firebaseSetDoc = null;
 let firebaseGetDoc = null;
-let firebaseCollection = null; // Added for Firestore collection queries
-let firebaseGetDocs = null; // Added for Firestore collection queries
-let firebaseDeleteDoc = null; // Added for Firestore document deletion
+let firebaseCollection = null;
+let firebaseGetDocs = null;
+let firebaseDeleteDoc = null;
 
 
 export const useAuthStore = create((set, get) => ({
@@ -38,9 +38,9 @@ export const useAuthStore = create((set, get) => ({
     firebaseDoc = docFn;
     firebaseSetDoc = setDocFn;
     firebaseGetDoc = getDocFn;
-    firebaseCollection = collectionFn; // Set collection function
-    firebaseGetDocs = getDocsFn; // Set getDocs function
-    firebaseDeleteDoc = deleteDocFn; // Set deleteDoc function
+    firebaseCollection = collectionFn;
+    firebaseGetDocs = getDocsFn;
+    firebaseDeleteDoc = deleteDocFn;
   },
 
   // Login action using Firebase Auth
@@ -66,13 +66,14 @@ export const useAuthStore = create((set, get) => ({
 
       set({
         isLoggedIn: true,
-        userToken: await user.getIdToken(), // Get actual Firebase ID token
+        userToken: await user.getIdToken(),
         user: userData,
         authError: null,
       });
 
       // Load cart after successful login
-      useCartStore.getState().loadCartFromFirestore(user.uid, firebaseDb, appId, firebaseDoc, firebaseGetDoc, firebaseSetDoc);
+      // FIX: Access useCartStore via window object to avoid circular dependency
+      window.useCartStore.getState().loadCartFromFirestore(user.uid);
 
       return { success: true };
     } catch (error) {
@@ -131,7 +132,8 @@ export const useAuthStore = create((set, get) => ({
       });
 
       // Save empty cart to Firestore for new user
-      useCartStore.getState().saveCartToFirestore(user.uid, [], firebaseDb, appId, firebaseDoc, firebaseSetDoc);
+      // FIX: Access useCartStore via window object
+      window.useCartStore.getState().saveCartToFirestore(user.uid, []);
 
       console.log("Signup successful!"); // Debug log
       return { success: true };
@@ -165,12 +167,13 @@ export const useAuthStore = create((set, get) => ({
     }
     set({ isLoggedIn: false, userToken: null, user: null, authError: null });
     // When logging out, clear the local cart, but also save current cart to Firestore if user was logged in
-    const currentCart = useCartStore.getState().cart;
+    const currentCart = window.useCartStore.getState().cart; // Get current cart before clearing
     const currentUser = get().user; // Get user before it's cleared by set()
+    // FIX: Access useCartStore via window object
     if (currentUser && currentCart.length > 0) { // Only save if user was logged in and cart not empty
-        useCartStore.getState().saveCartToFirestore(currentUser.uid, currentCart, firebaseDb, appId, firebaseDoc, firebaseSetDoc);
+        window.useCartStore.getState().saveCartToFirestore(currentUser.uid, currentCart);
     }
-    useCartStore.getState().clearCart(); // Clear local cart after saving (or if not logged in)
+    window.useCartStore.getState().clearCart(); // Clear local cart after saving (or if not logged in)
   },
 
   // Listener for Firebase Auth state changes
@@ -192,19 +195,81 @@ export const useAuthStore = create((set, get) => ({
         set({ isLoggedIn: true, userToken: await user.getIdToken(), user: userData });
 
         // Load cart from Firestore when user logs in/auth state changes to logged in
-        useCartStore.getState().loadCartFromFirestore(user.uid, firebaseDb, appId, firebaseDoc, firebaseGetDoc, firebaseSetDoc);
+        // FIX: Access useCartStore via window object
+        window.useCartStore.getState().loadCartFromFirestore(user.uid);
 
       } else {
         // User is signed out
         // Save current cart to Firestore before clearing if user was just logged out
         const currentUser = get().user; // Get user before it's cleared by set()
-        const currentCart = useCartStore.getState().cart;
+        const currentCart = window.useCartStore.getState().cart;
+        // FIX: Access useCartStore via window object
         if (currentUser && currentCart.length > 0) { // Only save if user was logged in and cart not empty
-            useCartStore.getState().saveCartToFirestore(currentUser.uid, currentCart, firebaseDb, appId, firebaseDoc, firebaseSetDoc);
+            window.useCartStore.getState().saveCartToFirestore(currentUser.uid, currentCart);
         }
         set({ isLoggedIn: false, userToken: null, user: null });
-        useCartStore.getState().clearCart(); // Clear local cart
+        window.useCartStore.getState().clearCart(); // Clear local cart
       }
     });
+  },
+
+  // --- Address Management Actions ---
+  // Path for addresses: artifacts/{appId}/users/{userId}/addresses/{addressId}
+  addAddress: async (userId, addressData) => {
+    if (!firebaseAuth || !firebaseDb || !appId || !userId) {
+      console.error("Firebase/User not initialized for addAddress.");
+      return { success: false, error: 'Firebase/User not initialized.' };
+    }
+    set({ authLoading: true });
+    try {
+      const addressesCollectionRef = firebaseCollection(firebaseDb, `artifacts/${appId}/users/${userId}/addresses`);
+      const newAddressRef = await addDoc(addressesCollectionRef, { ...addressData, createdAt: new Date().toISOString() });
+      console.log("Address added with ID:", newAddressRef.id);
+      return { success: true, addressId: newAddressRef.id };
+    } catch (error) {
+      console.error("Error adding address:", error);
+      return { success: false, error: error.message };
+    } finally {
+      set({ authLoading: false });
+    }
+  },
+
+  getAddresses: async (userId) => {
+    if (!firebaseAuth || !firebaseDb || !appId || !userId) {
+      console.error("Firebase/User not initialized for getAddresses.");
+      return { success: false, error: 'Firebase/User not initialized.' };
+    }
+    set({ authLoading: true });
+    try {
+      const addressesCollectionRef = firebaseCollection(firebaseDb, `artifacts/${appId}/users/${userId}/addresses`);
+      const querySnapshot = await firebaseGetDocs(addressesCollectionRef);
+      const addresses = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log("Fetched addresses:", addresses);
+      return { success: true, addresses: addresses };
+    } catch (error) {
+      console.error("Error getting addresses:", error);
+      return { success: false, error: error.message };
+    } finally {
+      set({ authLoading: false });
+    }
+  },
+
+  deleteAddress: async (userId, addressId) => {
+    if (!firebaseAuth || !firebaseDb || !appId || !userId || !addressId) {
+      console.error("Firebase/User/Address ID not initialized for deleteAddress.");
+      return { success: false, error: 'Firebase/User/Address ID not initialized.' };
+    }
+    set({ authLoading: true });
+    try {
+      const addressDocRef = firebaseDoc(firebaseDb, `artifacts/${appId}/users/${userId}/addresses/${addressId}`);
+      await firebaseDeleteDoc(addressDocRef);
+      console.log("Address deleted:", addressId);
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting address:", error);
+      return { success: false, error: error.message };
+    } finally {
+      set({ authLoading: false });
+    }
   }
 }));

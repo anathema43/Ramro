@@ -2,10 +2,9 @@ import React, { useState, useEffect } from "react";
 import { HashRouter as Router, Routes, Route, useNavigate } from "react-router-dom";
 
 // Firebase Imports (for local environment)
-// These imports are crucial for Firebase to work.
 import { initializeApp } from "firebase/app";
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore"; // Ensure all Firestore functions are imported
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 
 // Import all page components
 import LandingPage from "./pages/LandingPage.jsx";
@@ -14,6 +13,7 @@ import Cart from "./pages/Cart.jsx";
 import ProductDetail from "./pages/ProductDetail.jsx";
 import Login from "./pages/Login.jsx";
 import Signup from "./pages/Signup.jsx";
+import AccountPage from "./pages/AccountPage.jsx";
 
 // Import all component parts
 import Navbar from "./components/Navbar.jsx";
@@ -22,6 +22,7 @@ import AppMessage from "./components/AppMessage.jsx";
 
 // Import Zustand stores
 import { useAuthStore } from "./store/authStore.js";
+import { useCartStore } from "./store/cartStore.js";
 // Import product data
 import { allProducts } from "./data/products.js";
 
@@ -44,9 +45,10 @@ const AuthRedirector = () => {
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMessage, setAppMessage] = useState({ message: '', type: '' });
-  const setFirebaseInstances = useAuthStore((state) => state.setFirebaseInstances);
+  const setFirebaseInstancesAuth = useAuthStore((state) => state.setFirebaseInstances);
   const listenToAuthChanges = useAuthStore((state) => state.listenToAuthChanges);
-  
+  const setFirebaseCartFunctions = useCartStore((state) => state.setFirebaseCartFunctions);
+
   const showMessage = (message, type) => {
     setAppMessage({ message, type });
   };
@@ -86,8 +88,8 @@ const App = () => {
       authInstance = getAuth(firebaseApp);
       dbInstance = getFirestore(firebaseApp);
 
-      // Set Firebase instances and functions in Zustand store
-      setFirebaseInstances(
+      // Set Firebase instances and functions in Auth Zustand store
+      setFirebaseInstancesAuth(
         authInstance, 
         dbInstance, 
         currentAppId, 
@@ -98,10 +100,14 @@ const App = () => {
         doc, 
         setDoc, 
         getDoc,
-        collection, // Passed collection
-        getDocs,    // Passed getDocs
-        deleteDoc   // Passed deleteDoc
+        collection, 
+        getDocs,    
+        deleteDoc   
       );
+
+      // FIX: Set Firebase instances and functions in Cart Zustand store
+      setFirebaseCartFunctions(dbInstance, currentAppId, doc, getDoc, setDoc);
+
 
       // Removed signInAnonymously and signInWithCustomToken logic.
       // Users must now explicitly login or signup.
@@ -144,8 +150,7 @@ const App = () => {
             <Route path="/cart" element={<Cart showMessage={showMessage} />} />
             <Route path="/login" element={<Login showMessage={showMessage} />} />
             <Route path="/signup" element={<Signup showMessage={showMessage} />} />
-            {/* AccountPage is a placeholder for now */}
-            <Route path="/account" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">Account Page - Coming Soon!</h1></div>} />
+            <Route path="/account" element={<AccountPage showMessage={showMessage} />} />
             {/* Placeholder pages for About and Contact */}
             <Route path="/about" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">About Us Page - Coming Soon!</h1></div>} />
             <Route path="/contact" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">Contact Us Page - Coming Soon!</h1></div>} />
