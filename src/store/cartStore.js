@@ -1,14 +1,17 @@
 import { create } from "zustand";
 import { saveCartToFirestore } from "../firebase/firestoreService";
-import { useAuthStore } from "./authStore"; // Import authStore to get the user ID
+import { useAuthStore } from "./authStore";
 
-// This function will automatically save the cart to Firestore after any change
 const saveCartMiddleware = (config) => (set, get, api) => 
   config(
     (...args) => {
       set(...args);
       const { cart } = get();
       const { currentUser } = useAuthStore.getState();
+      
+      // --- THIS IS THE FIX ---
+      // Only attempt to save the cart if there is a logged-in user.
+      // This prevents the error from happening on logout.
       if (currentUser) {
         saveCartToFirestore(currentUser.uid, cart);
       }
@@ -20,7 +23,6 @@ const saveCartMiddleware = (config) => (set, get, api) =>
 export const useCartStore = create(saveCartMiddleware((set) => ({
   cart: [],
   
-  // New action to load the cart from Firestore
   loadCart: (cartItems) => set({ cart: cartItems }),
 
   addToCart: (product) => {
