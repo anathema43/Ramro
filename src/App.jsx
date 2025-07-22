@@ -4,7 +4,7 @@ import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import { useAuthStore } from './store/authStore';
 import { useCartStore } from './store/cartStore';
 
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
@@ -38,7 +38,13 @@ const App = () => {
 
       if (!firebaseConfig.apiKey) throw new Error("Firebase config missing");
 
-      const firebaseApp = initializeApp(firebaseConfig);
+      let firebaseApp;
+      if (!getApps().length) {
+        firebaseApp = initializeApp(firebaseConfig);
+      } else {
+        firebaseApp = getApps()[0];
+      }
+
       const auth = getAuth(firebaseApp);
       const db = getFirestore(firebaseApp);
       const appId = firebaseConfig.projectId;
