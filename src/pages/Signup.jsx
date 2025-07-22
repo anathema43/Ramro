@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { signup } from '../store/authStore'; // Corrected import
+import { useAuthStore } from '../store/authStore';
 
 const SignupPage = () => {
   const [name, setName] = useState('');
@@ -8,6 +8,7 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { signup } = useAuthStore(); // Get the signup action from the hook
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,7 +18,7 @@ const SignupPage = () => {
       return;
     }
     try {
-      await signup(email, password, name); // Use the imported function
+      await signup(email, password, name);
       navigate('/products');
     } catch (err) {
       setError('Failed to create an account. The email may already be in use.');

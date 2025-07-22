@@ -10,7 +10,7 @@ import ProductDetail from "./pages/ProductDetail";
 import AccountPage from "./pages/AccountPage";
 import LoginPage from "./pages/Login";
 import SignupPage from "./pages/Signup";
-import CheckoutPage from "./pages/CheckoutPage"; // <-- Import the new page
+import CheckoutPage from "./pages/CheckoutPage";
 
 // Import Components
 import Navbar from "./components/Navbar";
@@ -20,11 +20,15 @@ import AppMessage from "./components/AppMessage";
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMessage, setAppMessage] = useState({ message: '', type: '' });
-  const { fetchUser } = useAuthStore();
+  const { fetchUser } = useAuthStore(); // Get the fetchUser action from the store
 
+  // This effect runs ONCE when the app starts. It is the correct way to initialize the listener.
   useEffect(() => {
     const unsubscribe = fetchUser();
-    return () => unsubscribe();
+    return () => {
+      // This cleans up the listener when the component is unmounted
+      unsubscribe();
+    };
   }, [fetchUser]);
 
   const showMessage = (message, type) => {
@@ -49,7 +53,7 @@ const App = () => {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} /> {/* <-- Add the route */}
+        <Route path="/checkout" element={<CheckoutPage />} />
         <Route path="/about" element={<div className="min-h-screen bg-stone-100 p-8"><h1 className="text-4xl text-center">About Us</h1></div>} />
         <Route path="/contact" element={<div className="min-h-screen bg-stone-100 p-8"><h1 className="text-4xl text-center">Contact Us</h1></div>} />
       </Routes>

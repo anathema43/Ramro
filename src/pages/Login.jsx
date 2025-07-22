@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { login } from '../store/authStore'; // Corrected import
+import { useAuthStore } from '../store/authStore';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuthStore(); // Get the login action from the hook
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password); // Use the imported function
+      await login(email, password);
       navigate('/products');
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
