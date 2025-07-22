@@ -10,13 +10,12 @@ const SignupPage = () => {
   const auth = getAuth();
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
-
     const { name, email, password } = formData;
 
     if (!name || !email || !password) {
@@ -26,14 +25,9 @@ const SignupPage = () => {
 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Update user display name
       await updateProfile(userCredential.user, { displayName: name });
-
-      // Zustand store will sync user via listener in App.jsx
       navigate('/products');
     } catch (err) {
-      console.error("Signup error:", err.code);
       switch (err.code) {
         case 'auth/email-already-in-use':
           setError('This email is already registered. Try logging in.');
@@ -41,27 +35,19 @@ const SignupPage = () => {
         case 'auth/weak-password':
           setError('Password should be at least 6 characters.');
           break;
-        case 'auth/invalid-email':
-          setError('Please enter a valid email address.');
-          break;
-        case 'auth/network-request-failed':
-          setError('Network error. Please check your connection.');
-          break;
         default:
-          setError('Something went wrong. Please try again.');
+          setError('Signup failed. Please try again.');
       }
     }
   };
 
   return (
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
-      <form
-        onSubmit={handleSignup}
-        className="w-full max-w-md bg-white p-6 rounded shadow space-y-4"
-      >
+      <form onSubmit={handleSignup} className="w-full max-w-md bg-white p-6 rounded shadow space-y-4">
         <h1 className="text-2xl font-semibold text-center">Sign Up</h1>
 
         <input
+          id="name"
           type="text"
           name="name"
           placeholder="Name"
@@ -70,6 +56,7 @@ const SignupPage = () => {
           className="w-full px-4 py-2 border rounded"
         />
         <input
+          id="email"
           type="email"
           name="email"
           placeholder="Email"
@@ -78,9 +65,10 @@ const SignupPage = () => {
           className="w-full px-4 py-2 border rounded"
         />
         <input
+          id="password"
           type="password"
           name="password"
-          placeholder="Password (min 6 chars)"
+          placeholder="Password"
           value={formData.password}
           onChange={handleChange}
           className="w-full px-4 py-2 border rounded"

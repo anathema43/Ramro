@@ -25,7 +25,6 @@ const LoginPage = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      // Zustand will update user state via listener in App.jsx
       navigate('/products');
     } catch (err) {
       console.error("Login error:", err.code);
@@ -57,6 +56,7 @@ const LoginPage = () => {
         <h1 className="text-2xl font-semibold text-center">Login</h1>
 
         <input
+          id="email"
           type="email"
           name="email"
           placeholder="Email"
@@ -66,6 +66,7 @@ const LoginPage = () => {
         />
 
         <input
+          id="password"
           type="password"
           name="password"
           placeholder="Password"
