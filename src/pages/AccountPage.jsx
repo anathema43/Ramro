@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+// The ONLY import from authStore should be the hook itself
+import { useAuthStore } from '../store/authStore'; 
 import { updateUserProfile, addAddress, getAddresses, deleteAddress } from '../firebase/firestoreService';
 import { UserCircleIcon, ClipboardDocumentListIcon, HomeIcon, ArrowRightOnRectangleIcon, PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const AccountPage = () => {
-  const { currentUser, logout, loading } = useAuthStore();
+  // Get everything from the useAuthStore hook
+  const { currentUser, logout, loading } = useAuthStore(); 
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   
@@ -15,19 +17,15 @@ const AccountPage = () => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', zip: '' });
 
-  // This useEffect hook is the correct way to handle redirects and data fetching.
   useEffect(() => {
-    // First, check if authentication is still loading.
     if (loading) {
-      return; // Do nothing until the loading is complete.
+      return; 
     }
-    // If loading is finished and there is no user, then navigate to login.
     if (!currentUser) {
       navigate('/login');
       return;
     }
     
-    // If there is a user, fetch their data.
     setName(currentUser.displayName || '');
     const fetchAddresses = async () => {
       try {
@@ -45,12 +43,15 @@ const AccountPage = () => {
   const handleAddAddress = async (e) => { e.preventDefault(); const docRef = await addAddress(currentUser.uid, newAddress); setAddresses([...addresses, { id: docRef.id, ...newAddress }]); setNewAddress({ street: '', city: '', state: '', zip: '' }); setShowAddressForm(false); };
   const handleDeleteAddress = async (addressId) => { await deleteAddress(currentUser.uid, addressId); setAddresses(addresses.filter(addr => addr.id !== addressId)); };
 
-  // Show a loading state while checking for a user or if the redirect is about to happen.
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  }
+
   if (loading || !currentUser) {
     return <div className="min-h-screen bg-stone-100 flex items-center justify-center">Loading...</div>;
   }
 
-  // Render the full page if the user is logged in.
   return (
     <div className="min-h-screen bg-stone-100 pt-10">
       <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -74,7 +75,7 @@ const AccountPage = () => {
                 <button onClick={() => setActiveTab('addresses')} className={`w-full text-left flex items-center p-3 rounded-md transition-colors ${activeTab === 'addresses' ? 'bg-amber-100 text-amber-800 font-semibold' : 'hover:bg-stone-100'}`}>
                   <HomeIcon className="h-5 w-5 mr-3"/> Manage Addresses
                 </button>
-                <button onClick={async () => { await logout(); navigate('/login'); }} className="w-full text-left flex items-center p-3 rounded-md transition-colors hover:bg-stone-100 mt-4 border-t pt-4">
+                <button onClick={handleLogout} className="w-full text-left flex items-center p-3 rounded-md transition-colors hover:bg-stone-100 mt-4 border-t pt-4">
                   <ArrowRightOnRectangleIcon className="h-5 w-5 mr-3"/> Logout
                 </button>
               </nav>
@@ -83,7 +84,7 @@ const AccountPage = () => {
           
           <main className="md:w-3/4">
             <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-              {/* Profile Content, Order History, and Address Management JSX here */}
+              {/* Profile, Orders, and Addresses content will render here based on activeTab */}
             </div>
           </main>
         </div>

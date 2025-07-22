@@ -30,11 +30,11 @@ export const deleteAddress = (userId, addressId) => {
   return deleteDoc(addressDocRef);
 };
 
-// --- THIS IS THE CORRECTED CART SAVING FUNCTION ---
+// --- THIS FUNCTION IS NOW SAFER ---
 export const saveCartToFirestore = (userId, cartItems) => {
   const userDocRef = doc(db, 'users', userId);
-  // Using setDoc with { merge: true } is safer. It will create the user document
-  // with a cart if it doesn't exist, or just update the cart field if it does.
+  // Using setDoc with { merge: true } will create the document if it's missing,
+  // or just update the 'cart' field if the document already exists.
   return setDoc(userDocRef, { cart: cartItems }, { merge: true });
 };
 

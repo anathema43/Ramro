@@ -8,7 +8,7 @@ const SignupPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { signup } = useAuthStore(); // Get the signup action from the hook
+  const { signup } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -7,7 +7,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuthStore(); // Get the login action from the hook
+  const { login } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();

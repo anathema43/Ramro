@@ -20,13 +20,13 @@ import AppMessage from "./components/AppMessage";
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMessage, setAppMessage] = useState({ message: '', type: '' });
-  const { fetchUser } = useAuthStore(); // Get the fetchUser action from the store
+  const { fetchUser } = useAuthStore();
 
-  // This effect runs ONCE when the app starts. It is the correct way to initialize the listener.
+  // This effect runs ONCE when the app starts. It's the correct way to initialize the listener.
   useEffect(() => {
     const unsubscribe = fetchUser();
     return () => {
-      // This cleans up the listener when the component is unmounted
+      // This cleans up the listener when the app closes
       unsubscribe();
     };
   }, [fetchUser]);
