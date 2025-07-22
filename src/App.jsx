@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
-
 import { useAuthStore } from './store/authStore';
 import { useCartStore } from './store/cartStore';
 
-import { initializeApp, getApps } from "firebase/app";
-import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+// Firebase Imports
+import { initializeApp } from "firebase/app";
+import { getAuth, onAuthStateChanged, signOut } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
+// Page and Component Imports...
 import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
@@ -16,7 +17,6 @@ import AccountPage from "./pages/AccountPage";
 import LoginPage from "./pages/Login";
 import SignupPage from "./pages/Signup";
 import CheckoutPage from "./pages/CheckoutPage";
-
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
 import AppMessage from "./components/AppMessage";
@@ -25,6 +25,7 @@ const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMessage, setAppMessage] = useState({ message: '', type: '' });
 
+  // This useEffect handles all Firebase initialization and store setup once.
   useEffect(() => {
     try {
       const firebaseConfig = {
@@ -36,31 +37,37 @@ const App = () => {
         appId: import.meta.env.VITE_FIREBASE_APP_ID,
       };
 
-      if (!firebaseConfig.apiKey) throw new Error("Firebase config missing");
-
-      let firebaseApp;
-      if (!getApps().length) {
-        firebaseApp = initializeApp(firebaseConfig);
-      } else {
-        firebaseApp = getApps()[0];
+      if (!firebaseConfig.apiKey) {
+        throw new Error("Firebase configuration is missing.");
       }
 
+      const firebaseApp = initializeApp(firebaseConfig);
       const auth = getAuth(firebaseApp);
       const db = getFirestore(firebaseApp);
       const appId = firebaseConfig.projectId;
 
+      // Set up the auth store with all necessary Firebase instances and functions
       useAuthStore.getState().setFirebaseInstances(auth, db, appId, onAuthStateChanged, signOut);
+
+      // Set up the cart store with the necessary Firebase functions
       useCartStore.getState().setFirebaseCartFunctions(db, appId, doc, getDoc, setDoc);
+
+      // Start listening for authentication changes
       useAuthStore.getState().listenToAuthChanges();
 
     } catch (error) {
-      console.error("Firebase init error:", error);
-      showMessage("Firebase init failed: " + error.message, "error");
+      console.error("Firebase Initialization Error:", error);
+      showMessage("Application failed to start: " + error.message, "error");
     }
-  }, []);
+  }, []); // The empty dependency array ensures this runs only once.
 
-  const showMessage = (message, type) => setAppMessage({ message, type });
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const showMessage = (message, type) => {
+    setAppMessage({ message, type });
+  };
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   return (
     <Router>
