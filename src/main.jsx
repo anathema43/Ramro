@@ -1,16 +1,17 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App.jsx';
+import App from './App';
 import './index.css';
-// FIX: Attach Zustand stores to the window object for cross-store access
-import { useCartStore } from './store/cartStore';
-import { useAuthStore } from './store/authStore';
 
-window.useCartStore = useCartStore;
+import { useAuthStore } from './store/authStore';
+import { useCartStore } from './store/cartStore';
+
+// Attach Zustand stores to window for safe global access between stores
 window.useAuthStore = useAuthStore;
+window.useCartStore = useCartStore;
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
+  </React.StrictMode>
 );
