@@ -1,62 +1,107 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { createUserWithEmailAndPassword, updateProfile, getAuth } from 'firebase/auth';
 import { useAuthStore } from '../store/authStore';
 
 const SignupPage = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { signup } = useAuthStore();
+  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const auth = getAuth();
 
-  const handleSubmit = async (e) => {
+  const handleChange = (e) => {
+    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+
+    const { name, email, password } = formData;
+
+    if (!name || !email || !password) {
+      setError('All fields are required.');
       return;
     }
+
     try {
-      await signup(email, password, name);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Update user display name
+      await updateProfile(userCredential.user, { displayName: name });
+
+      // Zustand store will sync user via listener in App.jsx
       navigate('/products');
     } catch (err) {
-      setError('Failed to create an account. The email may already be in use.');
+      console.error("Signup error:", err.code);
+      switch (err.code) {
+        case 'auth/email-already-in-use':
+          setError('This email is already registered. Try logging in.');
+          break;
+        case 'auth/weak-password':
+          setError('Password should be at least 6 characters.');
+          break;
+        case 'auth/invalid-email':
+          setError('Please enter a valid email address.');
+          break;
+        case 'auth/network-request-failed':
+          setError('Network error. Please check your connection.');
+          break;
+        default:
+          setError('Something went wrong. Please try again.');
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-6">
-        <div className="text-center">
-            <h2 className="text-3xl font-bold text-stone-800">Create Your Account</h2>
-            <p className="text-stone-600 mt-2">Join Ramro to get started.</p>
-        </div>
-        {error && <p className="bg-red-200 text-red-800 p-3 rounded-md text-center">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-stone-700 font-semibold mb-1" htmlFor="name">Full Name</label>
-            <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" required />
-          </div>
-          <div>
-            <label className="block text-stone-700 font-semibold mb-1" htmlFor="email">Email Address</label>
-            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" required />
-          </div>
-          <div>
-            <label className="block text-stone-700 font-semibold mb-1" htmlFor="password">Password</label>
-            <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" placeholder="At least 6 characters" required />
-          </div>
-          <button type="submit" className="w-full bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 active:scale-95">
-            Create Account
-          </button>
-        </form>
-        <p className="text-center text-stone-600">
+      <form
+        onSubmit={handleSignup}
+        className="w-full max-w-md bg-white p-6 rounded shadow space-y-4"
+      >
+        <h1 className="text-2xl font-semibold text-center">Sign Up</h1>
+
+        <input
+          type="text"
+          name="name"
+          placeholder="Name"
+          value={formData.name}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded"
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded"
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Password (min 6 chars)"
+          value={formData.password}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded"
+        />
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <button
+          type="submit"
+          className="w-full bg-black text-white py-2 rounded hover:bg-stone-800"
+        >
+          Sign Up
+        </button>
+
+        <p className="text-center text-sm text-gray-500 mt-2">
           Already have an account?{' '}
-          <Link to="/login" className="text-amber-600 hover:underline font-semibold">
-            Login
-          </Link>
+          <a href="#/login" className="text-blue-600 hover:underline">
+            Log in
+          </a>
         </p>
-      </div>
+      </form>
     </div>
   );
 };

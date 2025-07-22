@@ -1,53 +1,95 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { useNavigate } from 'react-router-dom';
+import { signInWithEmailAndPassword, getAuth } from 'firebase/auth';
 
 const LoginPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuthStore();
+  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [error, setError] = useState('');
+  const auth = getAuth();
 
-  const handleSubmit = async (e) => {
+  const handleChange = (e) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
+
+    const { email, password } = formData;
+
+    if (!email || !password) {
+      setError('Both email and password are required.');
+      return;
+    }
+
     try {
-      await login(email, password);
+      await signInWithEmailAndPassword(auth, email, password);
+      // Zustand will update user state via listener in App.jsx
       navigate('/products');
     } catch (err) {
-      setError('Failed to log in. Please check your credentials.');
+      console.error("Login error:", err.code);
+      switch (err.code) {
+        case 'auth/user-not-found':
+          setError('No account found with this email.');
+          break;
+        case 'auth/wrong-password':
+          setError('Incorrect password. Try again.');
+          break;
+        case 'auth/invalid-email':
+          setError('Please enter a valid email address.');
+          break;
+        case 'auth/network-request-failed':
+          setError('Network error. Please check your connection.');
+          break;
+        default:
+          setError('Login failed. Please try again.');
+      }
     }
   };
 
   return (
     <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-6">
-        <div className="text-center">
-            <h2 className="text-3xl font-bold text-stone-800">Welcome Back!</h2>
-            <p className="text-stone-600 mt-2">Login to continue to Ramro.</p>
-        </div>
-        {error && <p className="bg-red-200 text-red-800 p-3 rounded-md text-center">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-stone-700 font-semibold mb-1" htmlFor="email">Email Address</label>
-            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" required />
-          </div>
-          <div>
-            <label className="block text-stone-700 font-semibold mb-1" htmlFor="password">Password</label>
-            <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" required />
-          </div>
-          <button type="submit" className="w-full bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 active:scale-95">
-            Login
-          </button>
-        </form>
-        <p className="text-center text-stone-600">
+      <form
+        onSubmit={handleLogin}
+        className="w-full max-w-md bg-white p-6 rounded shadow space-y-4"
+      >
+        <h1 className="text-2xl font-semibold text-center">Login</h1>
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded"
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border rounded"
+        />
+
+        {error && <p className="text-red-600 text-sm">{error}</p>}
+
+        <button
+          type="submit"
+          className="w-full bg-black text-white py-2 rounded hover:bg-stone-800"
+        >
+          Log In
+        </button>
+
+        <p className="text-center text-sm text-gray-500 mt-2">
           Don't have an account?{' '}
-          <Link to="/signup" className="text-amber-600 hover:underline font-semibold">
-            Sign Up
-          </Link>
+          <a href="#/signup" className="text-blue-600 hover:underline">
+            Sign up
+          </a>
         </p>
-      </div>
+      </form>
     </div>
   );
 };
