@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { getCartFromFirestore, saveCartToFirestore } from '../firebase/firestoreService'; // Make sure saveCartToFirestore is imported
+import { getCartFromFirestore } from '../firebase/firestoreService';
 import { useCartStore } from './cartStore';
 
 export const useAuthStore = create((set) => ({
@@ -12,11 +12,13 @@ export const useAuthStore = create((set) => ({
   fetchUser: () => {
     return onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // User has logged in. Let's fetch their saved cart from the database.
         const cartItems = await getCartFromFirestore(user.uid);
-        useCartStore.getState().loadCart(cartItems);
+        useCartStore.getState().loadCart(cartItems); // Load the fetched cart into the cart store
         set({ currentUser: user, loading: false });
       } else {
-        useCartStore.getState().clearCart();
+        // User has logged out. Clear the cart from the app's memory.
+        useCartStore.getState().clearLocalCart(); 
         set({ currentUser: null, loading: false });
       }
     });
@@ -38,11 +40,7 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: async () => {
-    const { currentUser } = useAuthStore.getState();
-    if (currentUser) {
-      // Save an empty cart to Firestore before signing out
-      await saveCartToFirestore(currentUser.uid, []);
-    }
+    // When logging out, we just sign out. The listener above will handle clearing the local cart.
     await signOut(auth);
   },
 }));

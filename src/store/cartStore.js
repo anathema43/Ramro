@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { saveCartToFirestore } from "../firebase/firestoreService";
 import { useAuthStore } from "./authStore";
 
+// This is a helper to prevent saving to the database on every single click.
+// It waits for 1 second of inactivity before saving.
 const debouncedSave = (fn, delay) => {
   let timeoutId;
   return (...args) => {
@@ -15,12 +17,16 @@ const saveCart = debouncedSave((cart) => {
   if (currentUser) {
     saveCartToFirestore(currentUser.uid, cart);
   }
-}, 1000); // Debounce save by 1 second
+}, 1000);
 
 export const useCartStore = create((set, get) => ({
   cart: [],
   
+  // This is used to load the cart from the database on login.
   loadCart: (cartItems) => set({ cart: cartItems }),
+
+  // This clears the cart from memory ONLY. It's used on logout.
+  clearLocalCart: () => set({ cart: [] }),
 
   addToCart: (product) => {
     const { cart } = get();
@@ -64,8 +70,9 @@ export const useCartStore = create((set, get) => ({
     saveCart(updatedCart);
   },
 
+  // This function is for the user to click. It clears the cart AND saves the empty cart to the DB.
   clearCart: () => {
     set({ cart: [] });
-    saveCart([]);
+    saveCart([]); // Save the empty cart to the database
   },
 }));

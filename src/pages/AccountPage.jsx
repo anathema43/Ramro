@@ -1,13 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// The ONLY import from authStore should be the hook itself
-import { useAuthStore } from '../store/authStore'; 
+import { useAuthStore } from '../store/authStore';
 import { updateUserProfile, addAddress, getAddresses, deleteAddress } from '../firebase/firestoreService';
 import { UserCircleIcon, ClipboardDocumentListIcon, HomeIcon, ArrowRightOnRectangleIcon, PencilIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 const AccountPage = () => {
-  // Get everything from the useAuthStore hook
-  const { currentUser, logout, loading } = useAuthStore(); 
+  const { currentUser, logout, loading } = useAuthStore();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
   
@@ -18,9 +16,7 @@ const AccountPage = () => {
   const [newAddress, setNewAddress] = useState({ street: '', city: '', state: '', zip: '' });
 
   useEffect(() => {
-    if (loading) {
-      return; 
-    }
+    if (loading) return;
     if (!currentUser) {
       navigate('/login');
       return;
@@ -44,8 +40,8 @@ const AccountPage = () => {
   const handleDeleteAddress = async (addressId) => { await deleteAddress(currentUser.uid, addressId); setAddresses(addresses.filter(addr => addr.id !== addressId)); };
 
   const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+      await logout();
+      navigate('/login');
   }
 
   if (loading || !currentUser) {
@@ -84,7 +80,78 @@ const AccountPage = () => {
           
           <main className="md:w-3/4">
             <div className="bg-white rounded-lg shadow-lg p-6 md:p-8">
-              {/* Profile, Orders, and Addresses content will render here based on activeTab */}
+              {activeTab === 'profile' && (
+                <div>
+                  <h3 className="text-2xl font-bold text-stone-800 mb-6">Personal Information</h3>
+                  {!isEditingName ? (
+                    <div className="flex items-center justify-between p-4 bg-stone-50 rounded-lg">
+                      <div>
+                        <p className="text-sm text-stone-500">Full Name</p>
+                        <p className="text-lg text-stone-900">{currentUser.displayName || 'Not set'}</p>
+                      </div>
+                      <button onClick={() => setIsEditingName(true)} className="flex items-center text-amber-600 hover:text-amber-800 font-semibold">
+                        <PencilIcon className="h-4 w-4 mr-1"/> Edit
+                      </button>
+                    </div>
+                  ) : (
+                    <form onSubmit={handleProfileUpdate} className="flex items-end gap-4 p-4 bg-stone-50 rounded-lg">
+                      <div className="flex-grow">
+                        <label className="block text-sm text-stone-500">Edit Full Name</label>
+                        <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full p-2 border-b-2 border-stone-300 focus:border-amber-500 focus:outline-none bg-transparent"/>
+                      </div>
+                      <button type="submit" className="bg-amber-600 text-white px-4 py-2 rounded-md hover:bg-amber-700">Save</button>
+                    </form>
+                  )}
+                  <div className="mt-4 p-4 bg-stone-50 rounded-lg">
+                    <p className="text-sm text-stone-500">Email Address (cannot be changed)</p>
+                    <p className="text-lg text-stone-900">{currentUser.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'orders' && (
+                 <div>
+                    <h3 className="text-2xl font-bold text-stone-800 mb-6">Order History</h3>
+                    <div className="text-center text-stone-500 bg-stone-50 p-6 rounded-lg">
+                        <p>You have no past orders.</p>
+                    </div>
+                 </div>
+              )}
+
+              {activeTab === 'addresses' && (
+                 <div>
+                    <h3 className="text-2xl font-bold text-stone-800 mb-6">Manage Addresses</h3>
+                    <div className="space-y-3 mb-6">
+                        {addresses.map(addr => (
+                            <div key={addr.id} className="bg-stone-50 p-4 rounded-lg flex justify-between items-center">
+                                <p className="text-stone-700">{`${addr.street}, ${addr.city}, ${addr.state} - ${addr.zip}`}</p>
+                                <button onClick={() => handleDeleteAddress(addr.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100">
+                                    <TrashIcon className="h-5 w-5"/>
+                                </button>
+                            </div>
+                        ))}
+                         {addresses.length === 0 && <p className="text-stone-500">You have no saved addresses.</p>}
+                    </div>
+                    {!showAddressForm && (
+                        <button onClick={() => setShowAddressForm(true)} className="flex items-center bg-stone-200 text-stone-700 px-4 py-2 rounded-md hover:bg-stone-300">
+                            <PlusIcon className="h-5 w-5 mr-2"/> Add New Address
+                        </button>
+                    )}
+                    {showAddressForm && (
+                        <form onSubmit={handleAddAddress} className="mt-4 p-4 bg-stone-50 rounded-lg border space-y-3">
+                            <h4 className="font-semibold text-stone-800">New Address Details</h4>
+                            <input type="text" placeholder="Street Address" value={newAddress.street} onChange={e => setNewAddress({...newAddress, street: e.target.value})} className="w-full p-2 rounded-md border" required />
+                            <input type="text" placeholder="City" value={newAddress.city} onChange={(e) => setNewAddress({...newAddress, city: e.target.value})} className="w-full p-2 rounded-md border" required />
+                            <input type="text" placeholder="State" value={newAddress.state} onChange={(e) => setNewAddress({...newAddress, state: e.target.value})} className="w-full p-2 rounded-md border" required />
+                            <input type="text" placeholder="ZIP Code" value={newAddress.zip} onChange={(e) => setNewAddress({...newAddress, zip: e.target.value})} className="w-full p-2 rounded-md border" required />
+                            <div className="flex gap-4">
+                                <button type="submit" className="flex-1 bg-amber-600 text-white py-2 rounded-md hover:bg-amber-700">Save Address</button>
+                                <button type="button" onClick={() => setShowAddressForm(false)} className="flex-1 bg-stone-200 text-stone-700 py-2 rounded-md hover:bg-stone-300">Cancel</button>
+                            </div>
+                        </form>
+                    )}
+                </div>
+              )}
             </div>
           </main>
         </div>
