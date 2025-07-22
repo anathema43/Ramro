@@ -1,31 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
-import { useAuthStore } from './store/authStore'; // Import your auth store
+import { useAuthStore } from './store/authStore';
 
-// Import all page components
+// Import Pages
 import LandingPage from "./pages/LandingPage";
 import Home from "./pages/Home";
 import Cart from "./pages/Cart";
 import ProductDetail from "./pages/ProductDetail";
 import AccountPage from "./pages/AccountPage";
-import LoginPage from "./pages/Login"; // Assuming filename is Login.jsx
-import SignupPage from "./pages/Signup"; // Assuming filename is Signup.jsx
+import LoginPage from "./pages/Login";
+import SignupPage from "./pages/Signup";
+import CheckoutPage from "./pages/CheckoutPage"; // <-- Import the new page
 
-
-// Import component parts
+// Import Components
 import Navbar from "./components/Navbar";
 import Sidebar from "./components/Sidebar";
-import AppMessage from "./components/AppMessage"; // Assuming you moved AppMessage to its own file
+import AppMessage from "./components/AppMessage";
 
 const App = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [appMessage, setAppMessage] = useState({ message: '', type: '' });
   const { fetchUser } = useAuthStore();
 
-  // This effect runs once when the app starts and sets up the Firebase listener
   useEffect(() => {
     const unsubscribe = fetchUser();
-    return () => unsubscribe(); // Cleanup the listener when the app closes
+    return () => unsubscribe();
   }, [fetchUser]);
 
   const showMessage = (message, type) => {
@@ -50,8 +49,9 @@ const App = () => {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignupPage />} />
-        <Route path="/about" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">About Us Page - Coming Soon!</h1></div>} />
-        <Route path="/contact" element={<div className="min-h-screen bg-stone-900 text-white p-8 flex items-center justify-center"><h1 className="text-4xl text-center">Contact Us Page - Coming Soon!</h1></div>} />
+        <Route path="/checkout" element={<CheckoutPage />} /> {/* <-- Add the route */}
+        <Route path="/about" element={<div className="min-h-screen bg-stone-100 p-8"><h1 className="text-4xl text-center">About Us</h1></div>} />
+        <Route path="/contact" element={<div className="min-h-screen bg-stone-100 p-8"><h1 className="text-4xl text-center">Contact Us</h1></div>} />
       </Routes>
     </Router>
   );

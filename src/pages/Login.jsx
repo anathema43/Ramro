@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { login } from '../store/authStore'; // Corrected import
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { login } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     try {
-      await login(email, password);
+      await login(email, password); // Use the imported function
       navigate('/products');
     } catch (err) {
       setError('Failed to log in. Please check your credentials.');
@@ -27,30 +26,17 @@ const LoginPage = () => {
             <h2 className="text-3xl font-bold text-stone-800">Welcome Back!</h2>
             <p className="text-stone-600 mt-2">Login to continue to Ramro.</p>
         </div>
-        
         {error && <p className="bg-red-200 text-red-800 p-3 rounded-md text-center">{error}</p>}
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-stone-700 font-semibold mb-1" htmlFor="email">Email Address</label>
-            <input
-              type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              required
-            />
+            <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" required />
           </div>
           <div>
             <label className="block text-stone-700 font-semibold mb-1" htmlFor="password">Password</label>
-            <input
-              type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500"
-              required
-            />
+            <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full p-3 rounded-md bg-stone-100 border border-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-500" required />
           </div>
-          <button
-            type="submit"
-            className="w-full bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 active:scale-95"
-          >
+          <button type="submit" className="w-full bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 active:scale-95">
             Login
           </button>
         </form>
