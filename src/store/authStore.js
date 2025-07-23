@@ -1,60 +1,69 @@
 import { create } from 'zustand';
+import { auth, db } from '../firebase';
+import {
+  onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+  signOut,
+} from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { getCartFromFirestore, saveCartToFirestore } from '../firebase/firestoreService';
+import { useCartStore } from './cartStore';
 
 export const useAuthStore = create((set, get) => ({
-  isLoggedIn: false,
-  user: null,
-  
-  // Firebase instances - will be set by App.jsx
-  _auth: null,
-  _db: null,
-  _appId: null,
-  _onAuthStateChanged: null,
-  _signOut: null,
+  currentUser: null,
+  authError: '',
+  authLoading: false,
 
-  setFirebaseInstances: (auth, db, appId, onAuthStateChanged, signOut) => {
-    set({
-      _auth: auth, _db: db, _appId: appId,
-      _onAuthStateChanged: onAuthStateChanged, _signOut: signOut
+  fetchUser: () => {
+    return onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const cartItems = await getCartFromFirestore(user.uid);
+        useCartStore.getState().loadCart(cartItems);
+        set({ currentUser: user });
+      } else {
+        useCartStore.getState().clearLocalCart();
+        set({ currentUser: null });
+      }
     });
   },
 
-  listenToAuthChanges: () => {
-    const { _auth, _onAuthStateChanged } = get();
-    if (_auth && _onAuthStateChanged) {
-      // This listener keeps the app's user state in sync with Firebase
-      _onAuthStateChanged(_auth, (user) => {
-        if (user) {
-          set({ isLoggedIn: true, user: user });
-          // When a user logs in, we tell the cart store to load their cart from Firestore
-          window.useCartStore.getState().loadCartFromFirestore(user.uid);
-        } else {
-          set({ isLoggedIn: false, user: null });
-          // When a user logs out, we clear the cart from the app's local memory
-          window.useCartStore.getState().clearCart();
-        }
+  signup: async (name, email, password) => {
+    set({ authLoading: true, authError: '' });
+    try {
+      const res = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(res.user, { displayName: name });
+      await setDoc(doc(db, 'users', res.user.uid), {
+        name,
+        email,
       });
+      set({ currentUser: res.user, authLoading: false });
+      return { success: true };
+    } catch (error) {
+      set({ authError: error.message, authLoading: false });
+      return { success: false, error: error.message };
     }
   },
 
-  // This is the corrected logout function
-  logout: async () => {
+  login: async (email, password) => {
+    set({ authLoading: true, authError: '' });
     try {
-      const state = get();
-      const currentUser = state.user;
-      const { cart, saveCartToFirestore } = window.useCartStore.getState();
-
-      // 1. Save the current cart to the database BEFORE logging out
-      if (currentUser && saveCartToFirestore && cart.length > 0) {
-        await saveCartToFirestore(currentUser.uid, cart);
-      }
-
-      // 2. Proceed to sign out from Firebase
-      if (state._signOut && state._auth) {
-        await state._signOut(state._auth);
-      }
-      // The listener will automatically handle clearing the local state
-    } catch (err) {
-      console.error("Logout failed:", err);
+      const res = await signInWithEmailAndPassword(auth, email, password);
+      set({ currentUser: res.user, authLoading: false });
+      return { success: true };
+    } catch (error) {
+      set({ authError: error.message, authLoading: false });
+      return { success: false, error: error.message };
     }
+  },
+
+  logout: async () => {
+    const { currentUser } = get();
+    if (currentUser) {
+      await saveCartToFirestore(currentUser.uid, useCartStore.getState().cart);
+    }
+    await signOut(auth);
+    set({ currentUser: null });
   },
 }));
