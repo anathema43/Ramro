@@ -1,65 +1,59 @@
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/authStore";
+import React from "react";
+import { Link } from "react-router-dom";
 import { useCartStore } from "../store/cartStore";
+import { useAuthStore } from "../store/authStore"; // This import was missing
+import { ShoppingCartIcon, Bars3Icon, UserCircleIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
 
 const Navbar = ({ onMenuClick }) => {
-  const { isLoggedIn, user, logout } = useAuthStore();
   const { cart } = useCartStore();
-  const navigate = useNavigate();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await logout();
-    navigate("/login");
-    setDropdownOpen(false);
-  };
-
-  const toggleDropdown = () => setDropdownOpen((prev) => !prev);
+  const { currentUser } = useAuthStore(); // This line was missing
+  const count = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const logoUrl = "https://res.cloudinary.com/dj4kdlwzo/image/upload/v1752951217/logo_ev3bxa.jpg";
 
   return (
-    <nav className="bg-white shadow-sm px-4 py-3 flex justify-between items-center sticky top-0 z-50">
-      <button onClick={onMenuClick} className="md:hidden text-xl" aria-label="Open menu">
-        ☰
-      </button>
+    <nav className="flex justify-between items-center px-4 sm:px-6 py-4 shadow bg-stone-900 text-white sticky top-0 z-10">
+      
+      {/* Left side: Hamburger and Desktop Links */}
+      <div className="flex items-center gap-6">
+        <button onClick={onMenuClick} className="sm:hidden text-white focus:outline-none" aria-label="Open menu">
+          <Bars3Icon className="w-8 h-8" />
+        </button>
+        <div className="hidden sm:flex items-center space-x-6">
+          <Link to="/" className="text-lg hover:text-amber-300 transition-colors">Home</Link>
+          <Link to="/products" className="text-lg hover:text-amber-300 transition-colors">Shop</Link>
+          <Link to="/about" className="text-lg hover:text-amber-300 transition-colors">About</Link>
+        </div>
+      </div>
 
-      <Link to="/" className="text-2xl font-bold text-stone-900">
-        Ramro
-      </Link>
+      {/* Center: Logo */}
+      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <Link to="/products" className="flex items-center">
+          <img src={logoUrl} alt="Ramro Logo" className="h-8 w-auto" />
+          <span className="text-2xl font-bold text-amber-500 ml-2 hidden md:inline">Ramro</span>
+        </Link>
+      </div>
+      
+      {/* Right side: Auth and Cart icons */}
+      <div className="flex items-center space-x-4 sm:space-x-6">
+        {/* THIS IS THE DYNAMIC LOGIC THAT WAS MISSING */}
+        {currentUser ? (
+          <Link to="/account" className="hover:text-amber-300 transition-colors" aria-label="My Account">
+            <UserCircleIcon className="w-7 h-7" />
+          </Link>
+        ) : (
+          <Link to="/login" className="hover:text-amber-300 transition-colors" aria-label="Login">
+             <ArrowRightOnRectangleIcon className="w-7 h-7" />
+          </Link>
+        )}
 
-      <div className="flex items-center gap-4 relative">
-        <Link to="/cart" aria-label="View cart" className="relative">
-          🛒
-          {cart.length > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-              {cart.length}
+        <Link to="/cart" className="relative hover:text-amber-300 transition-colors" aria-label="View cart">
+          <ShoppingCartIcon className="w-7 h-7" />
+          {count > 0 && (
+            <span className="absolute -top-2 -right-2 bg-amber-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+              {count}
             </span>
           )}
         </Link>
-
-        {isLoggedIn ? (
-          <div className="relative">
-            <button aria-label="My Account" onClick={toggleDropdown} className="text-sm text-stone-700 hover:text-stone-900">
-              {user?.displayName || "My Account"}
-            </button>
-
-            {dropdownOpen && (
-              <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg rounded z-50">
-                <Link to="/account" className="block px-4 py-2 hover:bg-stone-100" onClick={() => setDropdownOpen(false)}>
-                  Profile
-                </Link>
-                <button onClick={handleLogout} className="block w-full text-left px-4 py-2 hover:bg-stone-100">
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
-        ) : (
-          <>
-            <Link to="/login" className="text-sm text-stone-700 hover:text-stone-900">Login</Link>
-            <Link to="/signup" className="text-sm text-stone-700 hover:text-stone-900">Sign Up</Link>
-          </>
-        )}
       </div>
     </nav>
   );

@@ -1,10 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from '../store/authStore'; // This import was missing
 
 const Sidebar = ({ isOpen, onClose }) => {
-  const { currentUser } = useAuthStore();
+  const { currentUser } = useAuthStore(); // This line was missing
 
   return (
     <>
@@ -20,11 +20,14 @@ const Sidebar = ({ isOpen, onClose }) => {
           <nav className="flex flex-col space-y-4">
             <Link to="/" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Home</Link>
             <Link to="/products" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Shop</Link>
+            
+            {/* THIS IS THE DYNAMIC LOGIC THAT WAS MISSING */}
             {currentUser ? (
               <Link to="/account" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">My Account</Link>
             ) : (
               <Link to="/login" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Login</Link>
             )}
+
             <Link to="/about" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">About Us</Link>
             <Link to="/contact" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Contact</Link>
           </nav>

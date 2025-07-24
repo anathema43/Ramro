@@ -1,50 +1,148 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-export const useCartStore = create((set) => ({
+// This helper function prevents saving to the database on every single click.
+// It waits for 1 second of inactivity before saving.
+const debouncedSave = (fn, delay) => {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+};
+
+export const useCartStore = create((set, get) => ({
   cart: [],
+  
+  // Firebase instances - will be set by App.jsx
+  _db: null,
+  _doc: null,
+  _getDoc: null,
+  _setDoc: null,
 
-  // Loads cart items (used during login)
-  loadCart: (items) => set({ cart: items }),
+  // This function is called once by App.jsx to give the store access to Firebase
+  setFirebaseCartFunctions: (db, doc, getDoc, setDoc) => {
+    set({
+      _db: db,
+      _doc: doc,
+      _getDoc: getDoc,
+      _setDoc: setDoc,
+    });
+  },
 
-  // Clears the cart (used during logout)
+  // Save cart to Firestore (debounced)
+  saveCartToFirestore: debouncedSave(async (userId, cartItems) => {
+    const { _db, _doc, _setDoc } = get();
+    if (_db && _doc && _setDoc && userId) {
+      try {
+        const cartRef = _doc(_db, 'users', userId, 'cart', 'items');
+        await _setDoc(cartRef, { items: cartItems });
+      } catch (error) {
+        console.error('Error saving cart to Firestore:', error);
+      }
+    }
+  }, 1000),
+
+  // Load cart from Firestore
+  loadCartFromFirestore: async (userId) => {
+    const { _db, _doc, _getDoc } = get();
+    if (_db && _doc && _getDoc && userId) {
+      try {
+        const cartRef = _doc(_db, 'users', userId, 'cart', 'items');
+        const docSnap = await _getDoc(cartRef);
+        const cartItems = docSnap.exists() ? docSnap.data().items : [];
+        set({ cart: cartItems });
+      } catch (error) {
+        console.error('Error loading cart from Firestore:', error);
+      }
+    }
+  },
+  
+  loadCart: (cartItems) => set({ cart: cartItems }),
+  
+  // This clears the cart from local memory ONLY. It's used on logout.
   clearLocalCart: () => set({ cart: [] }),
 
-  // Adds item to cart
-  addToCart: (product) =>
-    set((state) => {
-      const exists = state.cart.find((p) => p.id === product.id);
-      if (exists) {
-        return {
-          cart: state.cart.map((p) =>
-            p.id === product.id ? { ...p, quantity: p.quantity + 1 } : p
-          ),
-        };
-      } else {
-        return { cart: [...state.cart, { ...product, quantity: 1 }] };
+  addToCart: (product) => {
+    const { cart, saveCartToFirestore } = get();
+    const existing = cart.find((item) => item.id === product.id);
+    let updatedCart;
+    if (existing) {
+      updatedCart = cart.map((item) =>
+        item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+      );
+    } else {
+      updatedCart = [...cart, { ...product, quantity: 1 }];
+    }
+    set({ cart: updatedCart });
+    
+    // Save to Firestore if user is logged in
+    if (window.useAuthStore) {
+      const { currentUser } = window.useAuthStore.getState();
+      if (currentUser) {
+        saveCartToFirestore(currentUser.uid, updatedCart);
       }
-    }),
+    }
+  },
 
-  // Increases item quantity
-  increaseQuantity: (id) =>
-    set((state) => ({
-      cart: state.cart.map((item) =>
-        item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-      ),
-    })),
+  increaseQuantity: (id) => {
+    const { cart, saveCartToFirestore } = get();
+    const updatedCart = cart.map((item) =>
+      item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+    );
+    set({ cart: updatedCart });
+    
+    // Save to Firestore if user is logged in
+    if (window.useAuthStore) {
+      const { currentUser } = window.useAuthStore.getState();
+      if (currentUser) {
+        saveCartToFirestore(currentUser.uid, updatedCart);
+      }
+    }
+  },
 
-  // Decreases item quantity
-  decreaseQuantity: (id) =>
-    set((state) => ({
-      cart: state.cart
-        .map((item) =>
-          item.id === id ? { ...item, quantity: item.quantity - 1 } : item
-        )
-        .filter((item) => item.quantity > 0),
-    })),
+  decreaseQuantity: (id) => {
+    const { cart, saveCartToFirestore } = get();
+    const updatedCart = cart
+      .map((item) =>
+        item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+      )
+      .filter((item) => item.quantity > 0);
+    set({ cart: updatedCart });
+    
+    // Save to Firestore if user is logged in
+    if (window.useAuthStore) {
+      const { currentUser } = window.useAuthStore.getState();
+      if (currentUser) {
+        saveCartToFirestore(currentUser.uid, updatedCart);
+      }
+    }
+  },
 
-  // Removes item from cart
-  removeFromCart: (id) =>
-    set((state) => ({
-      cart: state.cart.filter((item) => item.id !== id),
-    })),
+  removeFromCart: (id) => {
+    const { cart, saveCartToFirestore } = get();
+    const updatedCart = cart.filter((item) => item.id !== id);
+    set({ cart: updatedCart });
+    
+    // Save to Firestore if user is logged in
+    if (window.useAuthStore) {
+      const { currentUser } = window.useAuthStore.getState();
+      if (currentUser) {
+        saveCartToFirestore(currentUser.uid, updatedCart);
+      }
+    }
+  },
+
+  // This function is for the user to click. It clears the cart and saves the empty cart to the database.
+  clearCart: () => {
+    const { saveCartToFirestore } = get();
+    set({ cart: [] });
+    
+    // Save to Firestore if user is logged in
+    if (window.useAuthStore) {
+      const { currentUser } = window.useAuthStore.getState();
+      if (currentUser) {
+        saveCartToFirestore(currentUser.uid, []);
+      }
+    }
+  },
 }));
