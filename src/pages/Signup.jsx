@@ -1,77 +1,58 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
-const Signup = ({ showMessage }) => {
+const SignupPage = () => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
-  const { signup, authError, authLoading } = useAuthStore();
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-  });
-
-  const handleChange = (e) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const { signup } = useAuthStore();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { name, email, password } = formData;
-    const res = await signup(name, email, password);
-    if (res.success) {
-      showMessage('Signup successful!', 'success');
-      navigate('/');
-    } else {
-      showMessage(res.error, 'error');
+    setError('');
+
+    if (!email || !password || !name) {
+      setError('All fields are required.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    try {
+      await signup(email.trim(), password, name.trim());
+      navigate('/products');
+    } catch (err) {
+      setError('Failed to create an account: ' + err.message);
     }
   };
 
   return (
-    <div className="min-h-screen bg-stone-900 text-white flex items-center justify-center">
-      <form className="w-full max-w-sm space-y-6" onSubmit={handleSubmit}>
-        <h2 className="text-3xl font-bold text-center">Sign Up</h2>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          placeholder="Full Name"
-          required
-          value={formData.name}
-          onChange={handleChange}
-          className="w-full p-3 bg-stone-800 border border-stone-700 rounded"
-        />
-        <input
-          id="email"
-          name="email"
-          type="email"
-          placeholder="Email"
-          required
-          value={formData.email}
-          onChange={handleChange}
-          className="w-full p-3 bg-stone-800 border border-stone-700 rounded"
-        />
-        <input
-          id="password"
-          name="password"
-          type="password"
-          placeholder="Password"
-          required
-          value={formData.password}
-          onChange={handleChange}
-          className="w-full p-3 bg-stone-800 border border-stone-700 rounded"
-        />
-        <button
-          type="submit"
-          disabled={authLoading}
-          className="w-full bg-green-600 py-3 rounded font-semibold hover:bg-green-700 transition"
-        >
-          {authLoading ? 'Signing up...' : 'Sign Up'}
-        </button>
-        {authError && <p className="text-red-400 text-sm text-center">{authError}</p>}
-      </form>
+    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 space-y-6">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-stone-800">Create Your Account</h2>
+        </div>
+        {error && <p className="bg-red-200 text-red-800 p-3 rounded-md">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="text" placeholder="Name" className="input" value={name} onChange={(e) => setName(e.target.value)} required />
+          <input type="email" placeholder="Email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input type="password" placeholder="Password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <button className="w-full bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700">
+            Create Account
+          </button>
+        </form>
+        <p className="text-center">
+          Already have an account? <Link to="/login" className="text-amber-600 hover:underline">Login</Link>
+        </p>
+      </div>
     </div>
   );
 };
 
-export default Signup;
+export default SignupPage;

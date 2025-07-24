@@ -1,61 +1,40 @@
 import { create } from 'zustand';
 import { auth, db } from '../firebase';
-import {
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  signOut,
-} from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { getCartFromFirestore, saveCartToFirestore } from '../firebase/firestoreService';
 import { useCartStore } from './cartStore';
+import { getCartFromFirestore, saveCartToFirestore } from '../firebase/firestoreService';
 
 export const useAuthStore = create((set, get) => ({
   currentUser: null,
-  authError: '',
-  authLoading: false,
+  loading: true,
 
   fetchUser: () => {
     return onAuthStateChanged(auth, async (user) => {
       if (user) {
         const cartItems = await getCartFromFirestore(user.uid);
         useCartStore.getState().loadCart(cartItems);
-        set({ currentUser: user });
+        set({ currentUser: user, loading: false });
       } else {
         useCartStore.getState().clearLocalCart();
-        set({ currentUser: null });
+        set({ currentUser: null, loading: false });
       }
     });
   },
 
-  signup: async (name, email, password) => {
-    set({ authLoading: true, authError: '' });
-    try {
-      const res = await createUserWithEmailAndPassword(auth, email, password);
-      await updateProfile(res.user, { displayName: name });
-      await setDoc(doc(db, 'users', res.user.uid), {
+  signup: async (email, password, name) => {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    if (userCredential.user) {
+      await updateProfile(userCredential.user, { displayName: name });
+      await setDoc(doc(db, 'users', userCredential.user.uid), {
         name,
         email,
       });
-      set({ currentUser: res.user, authLoading: false });
-      return { success: true };
-    } catch (error) {
-      set({ authError: error.message, authLoading: false });
-      return { success: false, error: error.message };
     }
   },
 
   login: async (email, password) => {
-    set({ authLoading: true, authError: '' });
-    try {
-      const res = await signInWithEmailAndPassword(auth, email, password);
-      set({ currentUser: res.user, authLoading: false });
-      return { success: true };
-    } catch (error) {
-      set({ authError: error.message, authLoading: false });
-      return { success: false, error: error.message };
-    }
+    await signInWithEmailAndPassword(auth, email, password);
   },
 
   logout: async () => {
@@ -64,6 +43,5 @@ export const useAuthStore = create((set, get) => ({
       await saveCartToFirestore(currentUser.uid, useCartStore.getState().cart);
     }
     await signOut(auth);
-    set({ currentUser: null });
   },
 }));
