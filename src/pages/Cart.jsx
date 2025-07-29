@@ -1,83 +1,130 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCartStore } from "../store/cartStore";
+import formatCurrency from "../utils/formatCurrency";
+import AddToCartButton from "../components/AddToCartButton";
+import { TrashIcon, ShoppingBagIcon } from "@heroicons/react/24/outline";
 
-const Cart = ({ showMessage }) => {
-  const { cart, increaseQuantity, decreaseQuantity, removeFromCart, clearCart } = useCartStore();
+export default function Cart() {
+  const { cart, removeFromCart, clearCart, getTotalPrice } = useCartStore();
   const navigate = useNavigate();
-  const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-  const handleRemoveItem = (itemId, itemName) => {
-    removeFromCart(itemId);
-    showMessage(`'${itemName}' removed from cart.`, 'success');
-  };
-
-  const handleClearCart = () => {
-    clearCart();
-    showMessage('Your cart has been cleared.', 'success');
-  };
-
-  const handleCheckout = () => {
-    // We will navigate to our new checkout page
-    navigate('/checkout');
-  };
+  if (cart.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <div className="mb-6">
+          <ShoppingBagIcon className="w-24 h-24 mx-auto text-gray-300 mb-4" />
+          <h1 className="text-3xl font-bold mb-2 text-gray-800">Your Cart is Empty</h1>
+          <p className="text-gray-600">Looks like you haven't added any items to your cart yet.</p>
+        </div>
+        <Link 
+          to="/shop" 
+          className="inline-block px-8 py-3 bg-himalaya text-white rounded-lg hover:bg-himalaya-dark transition-colors font-semibold"
+        >
+          Start Shopping
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-stone-100">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-        <h1 className="text-4xl sm:text-5xl font-bold text-stone-800 mb-8 text-center">Your Cart</h1>
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-xl p-6 md:p-8">
-          {cart.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-xl text-gray-600">Your cart is empty.</p>
-              <Link to="/products" className="mt-4 inline-block bg-amber-600 text-white px-6 py-2 rounded-md hover:bg-amber-700 transition-colors">
-                  Start Shopping
-              </Link>
-            </div>
-          ) : (
-            <div>
-              <div className="space-y-6">
-                {cart.map((item) => (
-                  <div key={item.id} className="flex flex-col sm:flex-row gap-4 items-center border-b pb-4 last:border-b-0">
-                    <img src={item.image} alt={item.name} className="w-24 h-24 rounded-lg object-cover shadow-sm" />
-                    <div className="flex-1 text-center sm:text-left">
-                      <h2 className="text-lg font-semibold text-stone-800">{item.name}</h2>
-                      <p className="text-amber-600 font-bold">Rs. {item.price.toFixed(2)}</p>
-                    </div>
-                    <div className="flex items-center justify-center sm:justify-start gap-3">
-                      <button onClick={() => decreaseQuantity(item.id)} className="px-3 py-1 border rounded-md hover:bg-stone-100 active:scale-95">-</button>
-                      <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
-                      <button onClick={() => increaseQuantity(item.id)} className="px-3 py-1 border rounded-md hover:bg-stone-100 active:scale-95">+</button>
-                    </div>
-                     <div className="text-lg font-semibold text-stone-800 w-24 text-center">
-                        Rs. {(item.price * item.quantity).toFixed(2)}
-                     </div>
-                    <button onClick={() => handleRemoveItem(item.id, item.name)} className="text-red-500 hover:text-red-700 text-sm hover:underline">
-                      Remove
-                    </button>
-                  </div>
-                ))}
+    <div className="max-w-4xl mx-auto p-6">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-organic-text">Shopping Cart</h1>
+        <button
+          onClick={clearCart}
+          className="text-red-600 hover:text-red-800 text-sm font-medium"
+        >
+          Clear All Items
+        </button>
+      </div>
+
+      <div className="bg-organic-white rounded-lg shadow-lg overflow-hidden">
+        {/* Cart Items */}
+        <div className="divide-y divide-gray-200">
+          {cart.map((item) => (
+            <div key={item.id} className="p-6 flex items-center gap-6">
+              {/* Product Image */}
+              <img 
+                src={item.image} 
+                alt={item.name} 
+                className="w-20 h-20 object-cover rounded-lg flex-shrink-0"
+              />
+              
+              {/* Product Details */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-lg font-semibold text-organic-text mb-1">
+                  <Link 
+                    to={`/products/${item.id}`}
+                    className="hover:text-organic-primary transition-colors line-clamp-2"
+                  >
+                    {item.name}
+                  </Link>
+                </h3>
+                <p className="text-lg font-semibold text-green-700">{formatCurrency(item.price)}</p>
+                {item.quantityAvailable <= 5 && item.quantityAvailable > 0 && (
+                  <p className="text-orange-600 text-xs mt-1">
+                    Only {item.quantityAvailable} left in stock
+                  </p>
+                )}
               </div>
-              <div className="flex flex-col sm:flex-row justify-between items-center pt-6 border-t mt-6">
+              
+              {/* Quantity Controls */}
+              <div className="flex items-center gap-4">
+                <AddToCartButton product={item} />
+                <div className="text-right">
+                  <p className="text-sm text-organic-text opacity-75">Subtotal</p>
+                  <p className="text-lg font-semibold text-organic-text">
+                    {formatCurrency(item.price * item.quantity)}
+                  </p>
+                </div>
                 <button
-                  onClick={handleClearCart}
-                  className="bg-stone-200 text-stone-700 px-5 py-2 rounded-md hover:bg-stone-300 transition-colors mb-4 sm:mb-0 active:scale-95"
+                  onClick={() => removeFromCart(item.id)}
+                  className="p-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Remove item"
                 >
-                  Clear Cart
-                </button>
-                <div className="text-2xl font-bold text-stone-900">Total: Rs. {total.toFixed(2)}</div>
-              </div>
-              <div className="flex justify-end mt-8">
-                <button onClick={handleCheckout} className="bg-amber-600 text-white text-lg font-semibold px-8 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 active:scale-95">
-                    Proceed to Checkout
+                  <TrashIcon className="w-5 h-5" />
                 </button>
               </div>
             </div>
-          )}
+          ))}
+        </div>
+
+        {/* Cart Summary */}
+        <div className="bg-organic-background p-6 border-t">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-sm text-organic-text opacity-75">
+                Total Items: {cart.reduce((sum, item) => sum + item.quantity, 0)}
+              </p>
+              <p className="text-2xl font-bold text-organic-text">
+                Total: {formatCurrency(getTotalPrice())}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <Link
+                to="/shop"
+                className="btn-secondary px-6 py-3 rounded-lg font-semibold"
+              >
+                Continue Shopping
+              </Link>
+              <button
+                onClick={() => navigate("/checkout")}
+                className="btn-primary px-8 py-3 rounded-lg font-semibold"
+              >
+                Proceed to Checkout
+              </button>
+            </div>
+          </div>
+          
+          {/* Shipping Info */}
+          <div className="text-sm text-organic-text opacity-75 space-y-1">
+            <p>• Free shipping on orders over ₹500</p>
+            <p>• Secure checkout with multiple payment options</p>
+            <p>• 7-day return policy on all items</p>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default Cart;
+}

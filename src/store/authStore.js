@@ -1,93 +1,166 @@
-import { create } from 'zustand';
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import { auth } from "../firebase/firebase";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged,
+  updateProfile,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "firebase/auth";
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
-export const useAuthStore = create((set, get) => ({
-  isLoggedIn: false,
-  user: null,
-  currentUser: null, // Added for consistency
-  loading: true, // Added loading state
-  
-  // Firebase instances - will be set by App.jsx
-  _auth: null,
-  _db: null,
-  _appId: null,
-  _onAuthStateChanged: null,
-  _signOut: null,
-  _createUserWithEmailAndPassword: null,
-  _signInWithEmailAndPassword: null,
-  _updateProfile: null,
-  _doc: null,
-  _setDoc: null,
+const googleProvider = new GoogleAuthProvider();
 
-  // This function is called once by App.jsx to give the store access to Firebase
-  setFirebaseInstances: (instances) => {
-    set({
-      _auth: instances.auth,
-      _db: instances.db,
-      _appId: instances.appId,
-      _onAuthStateChanged: instances.onAuthStateChanged,
-      _signOut: instances.signOut,
-      _createUserWithEmailAndPassword: instances.createUserWithEmailAndPassword,
-      _signInWithEmailAndPassword: instances.signInWithEmailAndPassword,
-      _updateProfile: instances.updateProfile,
-      _doc: instances.doc,
-      _setDoc: instances.setDoc,
-    });
-  },
+export const useAuthStore = create(
+  persist(
+    (set, get) => ({
+  currentUser: null,
+  userProfile: null,
+  loading: true,
+  error: null,
 
-  // This starts the listener that keeps the user state in sync with Firebase
-  listenToAuthChanges: () => {
-    const { _auth, _onAuthStateChanged } = get();
-    if (_auth && _onAuthStateChanged) {
-      _onAuthStateChanged(_auth, (user) => {
+  fetchUser: () => {
+    try {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
         if (user) {
-          set({ 
-            isLoggedIn: true, 
-            user: user, 
-            currentUser: user, 
-            loading: false 
-          });
-          // Load cart from Firestore when user logs in
-          if (window.useCartStore) {
-            window.useCartStore.getState().loadCartFromFirestore(user.uid);
+          // Fetch user profile from Firestore
+          try {
+            const userDoc = await getDoc(doc(db, "users", user.uid));
+            const userProfile = userDoc.exists() ? userDoc.data() : null;
+            set({ currentUser: user, userProfile, loading: false });
+          } catch (error) {
+            console.error("Error fetching user profile:", error);
+            set({ currentUser: user, userProfile: null, loading: false });
           }
         } else {
-          set({ 
-            isLoggedIn: false, 
-            user: null, 
-            currentUser: null, 
-            loading: false 
-          });
-          // Clear cart when user logs out
-          if (window.useCartStore) {
-            window.useCartStore.getState().clearLocalCart();
-          }
+          set({ currentUser: null, userProfile: null, loading: false });
         }
       });
+      return unsubscribe;
+    } catch (error) {
+      console.log("Firebase not configured, using mock auth");
+      set({ currentUser: null, userProfile: null, loading: false });
+      return () => {};
     }
   },
 
-  // Signup function for the SignupPage
   signup: async (email, password, name) => {
-    const { _auth, _createUserWithEmailAndPassword, _updateProfile, _db, _doc, _setDoc } = get();
-    const userCredential = await _createUserWithEmailAndPassword(_auth, email, password);
-    if (userCredential.user) {
-      await _updateProfile(userCredential.user, { displayName: name });
-      await _setDoc(_doc(_db, 'users', userCredential.user.uid), {
-        name: name,
-        email: email,
-      });
+    set({ error: null, loading: true });
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      await updateProfile(userCredential.user, { displayName: name });
+      
+      // Create user profile in Firestore
+      const userProfile = {
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+        displayName: name,
+        role: 'customer',
+        createdAt: new Date().toISOString(),
+        addresses: [],
+        preferences: {
+          currency: 'USD',
+          language: 'en'
+        }
+      };
+      
+      await setDoc(doc(db, "users", userCredential.user.uid), userProfile);
+      set({ currentUser: userCredential.user, userProfile, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
     }
   },
 
-  // Login function for the LoginPage
   login: async (email, password) => {
-    const { _auth, _signInWithEmailAndPassword } = get();
-    await _signInWithEmailAndPassword(_auth, email, password);
+    set({ error: null, loading: true });
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      
+      // Fetch user profile
+      const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+      const userProfile = userDoc.exists() ? userDoc.data() : null;
+      
+      set({ currentUser: userCredential.user, userProfile, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
   },
-  
-  // Logout function for the AccountPage/Navbar
+
+  loginWithGoogle: async () => {
+    set({ error: null, loading: true });
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      
+      // Check if user profile exists, create if not
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      let userProfile;
+      
+      if (!userDoc.exists()) {
+        userProfile = {
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName,
+          photoURL: user.photoURL,
+          role: 'customer',
+          createdAt: new Date().toISOString(),
+          addresses: [],
+          preferences: {
+            currency: 'USD',
+            language: 'en'
+          }
+        };
+        await setDoc(doc(db, "users", user.uid), userProfile);
+      } else {
+        userProfile = userDoc.data();
+      }
+      
+      set({ currentUser: user, userProfile, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+
   logout: async () => {
-    const { _signOut, _auth } = get();
-    await _signOut(_auth);
+    set({ loading: true });
+    try {
+      await signOut(auth);
+      set({ currentUser: null, userProfile: null, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
   },
-}));
+
+  updateProfile: async (updates) => {
+    const { currentUser } = get();
+    if (!currentUser) throw new Error("No user logged in");
+    
+    set({ loading: true });
+    try {
+      await setDoc(doc(db, "users", currentUser.uid), updates, { merge: true });
+      set({ userProfile: { ...get().userProfile, ...updates }, loading: false });
+    } catch (error) {
+      set({ error: error.message, loading: false });
+      throw error;
+    }
+  },
+
+  clearError: () => set({ error: null }),
+}),
+    {
+      name: "auth-storage",
+      partialize: (state) => ({ 
+        currentUser: state.currentUser,
+        userProfile: state.userProfile 
+      }),
+    }
+  )
+);

@@ -1,87 +1,218 @@
-import React, { useState, useEffect } from "react";
-import { Link, useParams } from "react-router-dom";
-import { useCartStore } from "../store/cartStore";
-import { allProducts } from "../data/products.js"; // Import all products
+import React from "react";
+import { useParams, Link } from "react-router-dom";
+import { useProductStore } from "../store/productStore";
+import { useInventoryStore } from "../store/inventoryStore";
+import ReviewStars from "../components/ReviewStars";
+import WishlistButton from "../components/WishlistButton";
+import AddToCartButton from "../components/AddToCartButton";
+import ReviewSystem from "../components/ReviewSystem";
+import formatCurrency from "../utils/formatCurrency";
+import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
-const ProductDetail = ({ showMessage }) => {
+export default function ProductDetail() {
   const { id } = useParams();
-  const product = allProducts.find(p => p.id === parseInt(id));
+  const { products, getProductById } = useProductStore();
+  const { trackProduct, untrackProduct } = useInventoryStore();
+  const [product, setProduct] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
 
-  const { addToCart, increaseQuantity, decreaseQuantity, cart } = useCartStore();
-  const itemInCart = cart.find(item => item.id === product?.id);
+  React.useEffect(() => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        // Try to get from store first
+        let foundProduct = products.find((p) => p.id === id);
+        
+        // If not in store, fetch from Firebase
+        if (!foundProduct) {
+          foundProduct = await getProductById(id);
+        }
+        
+        setProduct(foundProduct);
+        
+        // Start tracking inventory for this product
+        if (foundProduct) {
+          trackProduct(id);
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const [imageLoaded, setImageLoaded] = useState(false);
+    fetchProduct();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [id]);
+    // Cleanup: stop tracking when component unmounts
+    return () => {
+      untrackProduct(id);
+    };
+  }, [id, products, getProductById, trackProduct, untrackProduct]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-organic-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-organic-primary"></div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-stone-100 text-stone-900 flex flex-col items-center justify-center p-8">
-        <h1 className="text-3xl font-bold mb-4">Product Not Found</h1>
-        <Link to="/products" className="bg-amber-600 text-white px-6 py-2 rounded-md hover:bg-amber-700">
-          &larr; Back to Shop
+      <div className="max-w-2xl mx-auto p-8 text-center">
+        <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
+        <p className="mb-6">The product you're looking for doesn't exist.</p>
+        <Link 
+          to="/shop" 
+          className="inline-flex items-center gap-2 px-6 py-2 bg-himalaya text-white rounded-lg hover:bg-himalaya-dark transition-colors"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Back to Shop
         </Link>
       </div>
     );
   }
 
-  const handleAddToCart = () => {
-    addToCart(product);
-    showMessage(`'${product.name}' added to cart!`, 'success');
-  };
+  const relatedProducts = products
+    .filter(p => p.id !== product.id && p.category === product.category)
+    .slice(0, 3);
 
   return (
-    <div className="min-h-screen bg-stone-100 text-stone-900">
-      <div className="container mx-auto p-4 sm:p-6 lg:p-8 my-8">
-        <Link to="/products" className="text-amber-600 hover:underline mb-6 inline-block">
-          &larr; Back to All Products
+    <div className="max-w-6xl mx-auto px-6 py-8">
+      {/* Breadcrumb */}
+      <nav className="mb-6">
+        <Link 
+          to="/shop" 
+          className="inline-flex items-center gap-2 text-himalaya hover:text-himalaya-dark"
+        >
+          <ArrowLeftIcon className="w-4 h-4" />
+          Back to Shop
         </Link>
-        <div className="bg-white rounded-lg shadow-xl p-6 md:p-8">
-          <div className="flex flex-col md:flex-row gap-8 lg:gap-12">
-            <div className="md:w-1/2">
-              <div className="relative aspect-square bg-stone-100 rounded-lg">
-                {!imageLoaded && <div className="absolute inset-0 bg-gray-300 animate-pulse rounded-lg"></div>}
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className={`w-full h-full object-cover rounded-lg shadow-md transition-opacity duration-300 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
-                  onLoad={() => setImageLoaded(true)}
-                />
-              </div>
+      </nav>
+
+      {/* Product Details */}
+      <div className="grid md:grid-cols-2 gap-12 mb-16">
+        {/* Product Image */}
+        <div className="relative">
+          <img 
+            src={product.image} 
+            alt={product.name} 
+            className="w-full h-96 object-cover rounded-lg shadow-lg"
+          />
+          {product.quantityAvailable === 0 && (
+            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
+              <span className="text-white font-bold text-2xl">Out of Stock</span>
             </div>
-            <div className="md:w-1/2">
-              <span className="text-sm font-semibold text-amber-600 bg-amber-100 px-3 py-1 rounded-full">{product.category}</span>
-              <h1 className="text-4xl font-bold my-3 text-stone-900">{product.name}</h1>
-              <p className="text-amber-600 font-extrabold text-3xl mb-4">Rs. {product.price.toFixed(2)}</p>
-              
-              <p className="text-stone-700 mb-6 leading-relaxed">
-                Experience the authentic taste of the Himalayas with our {product.name}. Handcrafted using traditional methods and the finest local ingredients. Each bite brings a piece of home, a memory of the misty mountains and vibrant cultures.
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="flex flex-col">
+          <div className="flex items-start justify-between mb-4">
+            <h1 className="text-3xl font-bold text-himalaya-dark">{product.name}</h1>
+            <WishlistButton productId={product.id} />
+          </div>
+          
+          <div className="mb-4">
+            <ReviewStars rating={product.rating || 4} />
+            <span className="ml-2 text-gray-600">
+              ({product.rating || 4}/5) • {product.reviewCount || 0} reviews
+            </span>
+          </div>
+          
+          <p className="text-xl font-semibold text-green-700 mb-6">{formatCurrency(product.price)}</p>
+          
+          <p className="text-gray-700 mb-6 leading-relaxed">{product.description}</p>
+          
+          {/* Product Features */}
+          <div className="mb-6">
+            <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+              <div><strong>SKU:</strong> {product.sku || 'N/A'}</div>
+              <div><strong>Weight:</strong> {product.weight || 'N/A'}</div>
+              <div><strong>Origin:</strong> {product.origin || 'Himalayas'}</div>
+              <div><strong>Artisan:</strong> {product.artisan || 'Local Artisan'}</div>
+            </div>
+            
+            {product.ingredients && (
+              <div className="mb-4">
+                <h4 className="font-semibold mb-2">Ingredients:</h4>
+                <p className="text-sm text-gray-600">{product.ingredients.join(', ')}</p>
+              </div>
+            )}
+            
+            <h3 className="font-semibold mb-2">Product Features:</h3>
+            <ul className="text-gray-600 space-y-1">
+              <li>• 100% Organic and Natural</li>
+              <li>• Sourced directly from Himalayan farmers</li>
+              <li>• No artificial preservatives or chemicals</li>
+              <li>• Sustainably grown and harvested</li>
+            </ul>
+          </div>
+          
+          {product.storageInstructions && (
+            <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-semibold text-blue-800 mb-1">Storage Instructions:</h4>
+              <p className="text-blue-700 text-sm">{product.storageInstructions}</p>
+            </div>
+          )}
+          
+          {/* Stock Status */}
+          <div className="mb-6">
+            {product.quantityAvailable > 0 ? (
+              <p className="text-green-600 font-medium">
+                ✓ In Stock ({product.quantityAvailable} available)
               </p>
-              
-              <div className="flex flex-col gap-4">
-                {itemInCart ? (
-                  <div className="flex items-center gap-4">
-                    <button onClick={() => decreaseQuantity(product.id)} className="px-4 py-2 border rounded-md hover:bg-stone-100 active:scale-95 text-xl font-bold">-</button>
-                    <span className="text-2xl font-bold w-12 text-center">{itemInCart.quantity}</span>
-                    <button onClick={() => increaseQuantity(product.id)} className="px-4 py-2 border rounded-md hover:bg-stone-100 active:scale-95 text-xl font-bold">+</button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={handleAddToCart}
-                    className="w-full bg-amber-600 text-white px-6 py-3 rounded-md hover:bg-amber-700 transition-colors duration-200 text-lg font-semibold active:scale-95"
-                  >
-                    Add to Cart
-                  </button>
-                )}
-              </div>
-            </div>
+            ) : (
+              <p className="text-red-600 font-medium">✗ Out of Stock</p>
+            )}
+          </div>
+          
+          {/* Add to Cart */}
+          <div className="mb-6">
+            <AddToCartButton product={product} className="w-full md:w-auto" />
+          </div>
+          
+          {/* Additional Info */}
+          <div className="text-sm text-gray-500 space-y-1">
+            <p>• Free shipping on orders over ₹500</p>
+            <p>• 7-day return policy</p>
+            <p>• Secure payment options</p>
           </div>
         </div>
       </div>
+
+      {/* Reviews Section */}
+      <div className="mb-16">
+        <ReviewSystem productId={product.id} />
+      </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {relatedProducts.map((relatedProduct) => (
+              <div key={relatedProduct.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
+                <img 
+                  src={relatedProduct.image} 
+                  alt={relatedProduct.name} 
+                  className="w-full h-48 object-cover"
+                />
+                <div className="p-4">
+                  <h3 className="font-bold mb-2">{relatedProduct.name}</h3>
+                  <p className="text-green-700 font-semibold mb-3">{formatCurrency(relatedProduct.price)}</p>
+                  <Link 
+                    to={`/products/${relatedProduct.id}`}
+                    className="block w-full text-center px-4 py-2 bg-himalaya text-white rounded hover:bg-himalaya-dark transition-colors"
+                  >
+                    View Product
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
-};
-
-export default ProductDetail;
+}

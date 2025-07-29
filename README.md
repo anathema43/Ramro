@@ -1,111 +1,199 @@
-Ramro E-commerce Application
-This repository contains the frontend code for Ramro, an e-commerce platform designed to bring authentic local products from Darjeeling, Nepal, and Kalimpong to people living across India, especially those native to the region. The project focuses on a clean, performant, and responsive UI/UX.
+# Ramro - Himalayan E-commerce Platform
 
-🎯 Project Goal
-To build a clean, performant, and responsive e-commerce website, focusing on local products from the Himalayan regions, with a delightful user experience.
+## 🏔️ About Ramro
 
-🧰 Tech Stack
-Frontend Framework: React
+Ramro is a premium e-commerce platform showcasing authentic Himalayan products including handcrafted goods, organic foods, and traditional items. Our mission is to connect global customers with local Himalayan artisans while preserving cultural heritage and supporting sustainable communities.
 
-Build Tool: Vite
+## ✨ Features
 
-Styling: Tailwind CSS (v3.4.4)
+### Core E-commerce
+- **Smart Shopping Cart** - Persistent cart with quantity controls
+- **Product Catalog** - Advanced filtering and search
+- **Multi-Currency Support** - USD, EUR, INR, NPR, CNY
+- **Secure Checkout** - Multiple payment methods
+- **User Accounts** - Profile management and order history
 
-State Management: Zustand
+### Himalayan-Specific Features
+- **Artisan Profiles** - Stories and backgrounds of local creators
+- **Origin Verification** - GPS tracking and authenticity certificates
+- **Cultural Context** - Educational content about products and regions
+- **Multi-Language Support** - English, Hindi, Nepali, Tibetan
+- **Seasonal Availability** - Weather and altitude-based product availability
 
-Routing: React Router DOM
+### Technical Features
+- **Progressive Web App** - Offline browsing capabilities
+- **Responsive Design** - Optimized for all devices
+- **Performance Optimized** - Fast loading with image optimization
+- **Accessibility Compliant** - WCAG 2.1 AA standards
 
-Icons: Heroicons
+## 🚀 Getting Started
 
-Image Hosting: Cloudinary (for product images)
+### Prerequisites
+- Node.js 18+ 
+- npm or yarn
+- Git
 
-PostCSS Plugins: postcss (v8.4.38), autoprefixer (v10.4.19), @tailwindcss/postcss (for Tailwind CSS v3 integration)
+### Installation
 
-📁 Folder Structure
-The project follows a standard React application structure for modularity and maintainability:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/ramro.git
+   cd ramro
+   ```
 
-ramro-ecommerce-app/
-├── public/
-│   ├── index.html
-│   └── vite.svg
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser**
+   Navigate to `http://localhost:5173`
+
+## 🛠️ Tech Stack
+
+### Frontend
+- **React 19** - UI library
+- **Vite** - Build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **Zustand** - State management
+- **React Router** - Client-side routing
+
+### Backend & Services
+- **Firebase** - Authentication and database
+- **Stripe** - Payment processing
+- **Cloudinary** - Image management
+- **Supabase** - Database and real-time features
+
+### Development Tools
+- **ESLint** - Code linting
+- **Cypress** - E2E testing
+- **TypeScript** - Type safety (optional)
+
+## 📁 Project Structure
+
+```
+ramro/
+├── public/                 # Static assets
+│   ├── images/            # Product and marketing images
+│   └── favicon.ico        # Site favicon
 ├── src/
-│   ├── components/
-│   │   ├── HeroSection.jsx
+│   ├── components/        # Reusable UI components
+│   │   ├── AddToCartButton.jsx
 │   │   ├── Navbar.jsx
 │   │   ├── ProductCard.jsx
-│   │   └── Sidebar.jsx
-│   ├── pages/
+│   │   └── ...
+│   ├── pages/            # Page components
+│   │   ├── Home.jsx
+│   │   ├── Shop.jsx
 │   │   ├── Cart.jsx
-│   │   ├── Home.jsx (This is the Shop/Products page)
-│   │   ├── LandingPage.jsx
-│   │   └── ProductDetail.jsx
-│   ├── store/
-│   │   └── cartStore.js
-│   ├── App.jsx
-│   ├── index.css
-│   └── main.jsx
-├── .gitignore
-├── package.json
-├── postcss.config.js
-├── tailwind.config.js
-└── vite.config.js
+│   │   └── ...
+│   ├── store/            # State management
+│   │   ├── authStore.js
+│   │   ├── cartStore.js
+│   │   └── ...
+│   ├── data/             # Static data and configurations
+│   ├── utils/            # Utility functions
+│   ├── firebase/         # Firebase configuration
+│   └── index.css         # Global styles
+├── cypress/              # E2E tests
+├── .env.example          # Environment variables template
+└── package.json          # Dependencies and scripts
+```
 
-🚀 Setup & Running the Application
-Follow these steps to get the Ramro e-commerce application up and running on your local machine.
+## 🎨 Design System
 
-Step 1: Create the Project & Install Core Dependencies
-Create the project folder:
-Open your terminal and navigate to where you want to create your project.
+### Color Palette
+```css
+/* Primary Colors */
+--himalayan-primary: #2D5A27    /* Deep Forest Green */
+--himalayan-secondary: #8B4513  /* Mountain Earth Brown */
+--himalayan-accent: #CD853F     /* Warm Sandstone */
 
-# Create the project directory and navigate into it
-mkdir ramro-ecommerce-app
-cd ramro-ecommerce-app
+/* Interactive Elements */
+--button-primary: #1B4332       /* Dark Pine Green */
+--button-hover: #2D5A27         /* Lighter on hover */
 
-Initialize React with Vite:
-This command sets up the basic React project structure.
+/* Status Colors */
+--success: #27AE60              /* Natural green */
+--warning: #F39C12              /* Sunset orange */
+--error: #E74C3C                /* Mountain sunset red */
+```
 
-npm create vite@latest . -- --template react
+### Typography
+- **Primary**: Inter (clean, international readability)
+- **Display**: Playfair Display (elegant headers)
+- **Cultural**: Noto Sans Devanagari (Hindi/Nepali support)
 
-If prompted "Current directory is not empty...", choose "Remove existing files and continue" if you want a clean start.
+## 🧪 Testing
 
-Install core Node.js dependencies:
+### Run E2E Tests
+```bash
+npm run cy:open
+```
 
-npm install
+### Test Coverage
+- User authentication flow
+- Shopping cart functionality
+- Product browsing and search
+- Checkout process
+- Admin panel operations
 
-Step 2: Install Additional Libraries
-Install React Router for navigation, Zustand for state management, and Heroicons for icons.
+## 🚀 Deployment
 
-npm install react-router-dom zustand @heroicons/react
+### Build for Production
+```bash
+npm run build
+```
 
-Step 3: Install and Configure Tailwind CSS
-This is a crucial step for styling. We'll install a stable version of Tailwind CSS (v3) and its PostCSS plugins.
+### Deploy to Netlify
+1. Connect your GitHub repository to Netlify
+2. Set build command: `npm run build`
+3. Set publish directory: `dist`
+4. Add environment variables in Netlify dashboard
 
-Install Tailwind CSS, PostCSS, and Autoprefixer:
+## 🤝 Contributing
 
-npm install -D tailwindcss@3.4.4 postcss@8.4.38 autoprefixer@10.4.19
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-Initialize Tailwind CSS and PostCSS config files:
-This command creates tailwind.config.js and postcss.config.js in your project root.
+### Development Guidelines
+- Follow the existing code style
+- Write meaningful commit messages
+- Add tests for new features
+- Update documentation as needed
+- Ensure accessibility compliance
 
-npx tailwindcss init -p
+## 📝 License
 
-Troubleshooting npx tailwindcss init -p: If this command fails (e.g., "could not determine executable to run"), it's an environment issue. You'll need to manually create tailwind.config.js and postcss.config.js in your project root with the content provided in Step 5 below.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Step 4: Create Missing Folders & Files
-These commands ensure your project has the correct directory structure.
+## 🙏 Acknowledgments
 
-Create component, page, and store folders:
+- Himalayan artisans and communities
+- Open source contributors
+- Cultural consultants and advisors
+- Beta testers and early adopters
 
-mkdir -p src/components src/pages src/store
+## 📞 Support
 
-Create all necessary .jsx and .js files:
+- **Email**: support@ramro.com
+- **Documentation**: [docs.ramro.com](https://docs.ramro.com)
+- **Issues**: [GitHub Issues](https://github.com/your-username/ramro/issues)
 
-touch src/components/HeroSection.jsx \
-      src/components/Navbar.jsx \
-      src/components/ProductCard.jsx \
-      src/components/Sidebar.jsx \
-      src/pages/Cart.jsx \
-      src/pages/Home.jsx \
-      src/pages/LandingPage.jsx \
-      src/pages/ProductDetail.jsx \
-      src/store/cartStore.js
+---
+
+Made with ❤️ for the Himalayan community

@@ -1,54 +1,119 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom animations */
-@keyframes bounce-once {
-  0%, 100% { transform: translateY(0); }
-  25% { transform: translateY(-5px); }
-  50% { transform: translateY(0); }
-  75% { transform: translateY(-2px); }
+/* CSS Custom Properties for Organic Color System */
+:root {
+  --organic-background: #FDFBF6;
+  --organic-primary: #B97D4B;
+  --organic-text: #333333;
+  --organic-highlight: #5E8C31;
+  --organic-white: #FFFFFF;
 }
-.animate-bounce-once { animation: bounce-once 0.6s ease-in-out; }
 
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+@layer base {
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--organic-background);
+    color: var(--organic-text);
+    min-height: 100vh;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
 }
-.animate-fade-in-up { animation: fade-in-up 0.8s ease-out forwards; }
-.delay-200 { animation-delay: 0.2s; }
 
-@keyframes flash-bg {
-  0% { background-color: transparent; }
-  50% { background-color: rgba(255, 255, 255, 0.2); }
-  100% { background-color: transparent; }
-}
-.animate-flash-bg { animation: flash-bg 0.3s ease-out; }
+@layer components {
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--organic-background);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: var(--organic-primary);
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--organic-text);
+  }
 
-@keyframes fade-in-down {
-  from { opacity: 0; transform: translateY(-20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.animate-fade-in-down { animation: fade-in-down 0.5s ease-out forwards; }
+  /* Organic button styles */
+  .btn-primary {
+    @apply bg-organic-primary text-organic-white font-semibold px-6 py-3 rounded-lg hover:shadow-lg transition-all duration-200 hover:opacity-90;
+  }
+  
+  .btn-secondary {
+    @apply border border-organic-text text-organic-text font-semibold px-6 py-3 rounded-lg hover:bg-organic-text hover:text-organic-white transition-all duration-200 bg-transparent;
+  }
 
+  /* Card hover effects */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5;
+  }
 
-/* Base styles for the body */
-body {
-  margin: 0;
-  font-family: 'Inter', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
-  background-color: #292524; /* stone-900 equivalent for body default */
+  /* Organic highlight text */
+  .text-highlight {
+    @apply text-organic-highlight font-medium;
+  }
+
+  /* Loading animation */
+  .loading-spinner {
+    @apply animate-spin rounded-full h-8 w-8 border-b-2 border-organic-primary;
+  }
+
+  /* Text truncation utilities */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Focus states for accessibility */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-organic-primary focus:ring-offset-2;
+  }
 }
-/* Ensure root element takes full height and sets a default background */
-#root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #292524; /* stone-900 equivalent for default app background */
-}
-/* Override body background to match the overall app background */
-body {
-  background-color: #292524; /* stone-900 equivalent for body default */
+
+@layer utilities {
+  /* Animation delays */
+  .animate-delay-100 {
+    animation-delay: 0.1s;
+  }
+  
+  .animate-delay-200 {
+    animation-delay: 0.2s;
+  }
+  
+  .animate-delay-300 {
+    animation-delay: 0.3s;
+  }
+  
+  .animate-delay-400 {
+    animation-delay: 0.4s;
+  }
+
+  /* Backdrop blur utilities */
+  .backdrop-blur-xs {
+    backdrop-filter: blur(2px);
+  }
 }

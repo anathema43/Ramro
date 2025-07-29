@@ -1,40 +1,26 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { XMarkIcon } from '@heroicons/react/24/outline';
-import { useAuthStore } from '../store/authStore'; // This import was missing
 
-const Sidebar = ({ isOpen, onClose }) => {
-  const { currentUser } = useAuthStore(); // This line was missing
-
+export default function Sidebar() {
   return (
-    <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-40 sm:hidden" onClick={onClose}></div>
-      )}
-      <div className={`fixed top-0 left-0 h-full w-64 bg-stone-900 text-white shadow-lg transform transition-transform duration-300 ease-in-out z-50 ${isOpen ? 'translate-x-0' : '-translate-x-full'} sm:hidden`}>
-        <div className="p-6">
-          <button onClick={onClose} className="text-white text-3xl absolute top-4 right-4" aria-label="Close menu">
-            <XMarkIcon className="w-8 h-8" />
-          </button>
-          <h2 className="text-2xl font-bold mb-8 text-amber-500">Menu</h2>
-          <nav className="flex flex-col space-y-4">
-            <Link to="/" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Home</Link>
-            <Link to="/products" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Shop</Link>
-            
-            {/* THIS IS THE DYNAMIC LOGIC THAT WAS MISSING */}
-            {currentUser ? (
-              <Link to="/account" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">My Account</Link>
-            ) : (
-              <Link to="/login" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Login</Link>
-            )}
-
-            <Link to="/about" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">About Us</Link>
-            <Link to="/contact" onClick={onClose} className="text-lg hover:text-amber-300 transition-colors">Contact</Link>
-          </nav>
-        </div>
+    <aside className="fixed left-0 top-16 h-full w-64 bg-white shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out z-40">
+      <div className="p-6">
+        <h2 className="text-xl font-bold text-himalaya-dark mb-4">Categories</h2>
+        <nav className="space-y-2">
+          <Link to="/" className="block py-2 px-3 rounded hover:bg-himalaya-light transition">
+            All Products
+          </Link>
+          <Link to="/category/pickles" className="block py-2 px-3 rounded hover:bg-himalaya-light transition">
+            Pickles & Preserves
+          </Link>
+          <Link to="/category/honey" className="block py-2 px-3 rounded hover:bg-himalaya-light transition">
+            Honey & Sweets
+          </Link>
+          <Link to="/category/spices" className="block py-2 px-3 rounded hover:bg-himalaya-light transition">
+            Spices & Herbs
+          </Link>
+        </nav>
       </div>
-    </>
+    </aside>
   );
-};
-
-export default Sidebar;
+}
