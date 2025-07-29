@@ -15,3 +15,42 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+
+// Import third-party commands
+import 'cypress-axe'
+import '@cypress/code-coverage/support'
+
+// Global configuration
+Cypress.on('uncaught:exception', (err, runnable) => {
+  // Prevent Cypress from failing on uncaught exceptions
+  // that are expected in the application
+  if (err.message.includes('ResizeObserver loop limit exceeded')) {
+    return false;
+  }
+  if (err.message.includes('Non-Error promise rejection captured')) {
+    return false;
+  }
+  return true;
+});
+
+// Before each test
+beforeEach(() => {
+  // Clear local storage and cookies
+  cy.clearLocalStorage();
+  cy.clearCookies();
+  
+  // Set up interceptors for common API calls
+  cy.intercept('GET', '/api/products*', { fixture: 'products.json' }).as('getProducts');
+  cy.intercept('POST', '/api/orders*', { fixture: 'order-success.json' }).as('createOrder');
+  cy.intercept('POST', '/api/auth/login*', { fixture: 'auth-success.json' }).as('login');
+});
+
+// After each test
+afterEach(() => {
+  // Clean up test data if needed
+  cy.window().then((win) => {
+    if (win.localStorage.getItem('test-mode')) {
+      cy.cleanupTestData();
+    }
+  });
+});
