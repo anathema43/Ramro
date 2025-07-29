@@ -82,6 +82,8 @@ Ramro is a premium e-commerce platform showcasing authentic Himalayan products i
 
 ## 📁 Project Structure
 
+For detailed architecture diagrams and flow charts, see [ARCHITECTURE_DIAGRAMS.md](ARCHITECTURE_DIAGRAMS.md).
+
 ```
 ramro/
 ├── public/                 # Static assets
