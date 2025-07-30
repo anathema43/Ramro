@@ -87,6 +87,13 @@ const compressImage = (file, quality = 0.7) => {
   // Compression logic
   return compressedFile;
 };
+
+// Responsive image delivery reduces bandwidth costs
+const getOptimalImageSize = (deviceWidth) => {
+  if (deviceWidth <= 768) return 'small'; // 400px
+  if (deviceWidth <= 1024) return 'medium'; // 800px
+  return 'large'; // 1200px
+};
 ```
 
 **Implementation:**

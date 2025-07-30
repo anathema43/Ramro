@@ -1,13 +1,139 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { TruckIcon, BeakerIcon, HandRaisedIcon, StarIcon } from "@heroicons/react/24/outline";
+import { TruckIcon, BeakerIcon, HandRaisedIcon, StarIcon, ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import ResponsiveImage from "../components/ResponsiveImage";
 import AddToCartButton from "../components/AddToCartButton";
-import products from "../data/products";
+import { useProductStore } from "../store/productStore";
 import formatCurrency from "../utils/formatCurrency";
 
 export default function Home() {
-  // Get featured products (first 4 products)
-  const featuredProducts = products.slice(0, 4);
+  const { products, featuredProducts, fetchProducts, fetchFeaturedProducts, loading } = useProductStore();
+  const [currentSlide, setCurrentSlide] = React.useState(0);
+  const [isAutoPlaying, setIsAutoPlaying] = React.useState(true);
+  const [touchStart, setTouchStart] = React.useState(0);
+  const [touchEnd, setTouchEnd] = React.useState(0);
+  const sliderRef = React.useRef(null);
+  
+  React.useEffect(() => {
+    // Fetch both regular products and featured products
+    const loadProducts = async () => {
+      try {
+        await fetchProducts();
+        await fetchFeaturedProducts();
+      } catch (error) {
+        console.error('Error loading products:', error);
+      }
+    };
+    
+    if (products.length === 0 || featuredProducts.length === 0) {
+      loadProducts();
+    }
+  }, [products.length, featuredProducts.length, fetchProducts, fetchFeaturedProducts]);
+
+  // Use featured products if available, fallback to first 4 regular products
+  const displayProducts = React.useMemo(() => {
+    if (featuredProducts.length > 0) {
+      return featuredProducts;
+    }
+    return products.filter(p => p.featured === true).slice(0, 4);
+  }, [featuredProducts, products]);
+
+  // Auto-play functionality
+  React.useEffect(() => {
+    if (!isAutoPlaying || displayProducts.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % displayProducts.length);
+    }, 5000); // Change slide every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [isAutoPlaying, displayProducts.length]);
+
+  // Touch handlers for swipe functionality
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+    setIsAutoPlaying(false);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && currentSlide < displayProducts.length - 1) {
+      setCurrentSlide(currentSlide + 1);
+    }
+    if (isRightSwipe && currentSlide > 0) {
+      setCurrentSlide(currentSlide - 1);
+    }
+    
+    // Resume auto-play after 3 seconds
+    setTimeout(() => setIsAutoPlaying(true), 3000);
+  };
+
+  // Navigation functions
+  const goToSlide = (index) => {
+    setCurrentSlide(index);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 3000);
+  };
+
+  const goToPrevious = () => {
+    setCurrentSlide((prev) => (prev === 0 ? displayProducts.length - 1 : prev - 1));
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 3000);
+  };
+
+  const goToNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % displayProducts.length);
+    setIsAutoPlaying(false);
+    setTimeout(() => setIsAutoPlaying(true), 3000);
+  };
+
+  // Loading state component
+  const LoadingProducts = () => (
+    <div className="flex gap-6 min-w-max">
+      {[...Array(4)].map((_, index) => (
+        <div key={index} className="flex-shrink-0 w-80 bg-white rounded-2xl shadow-lg overflow-hidden animate-pulse">
+          <div className="w-full h-64 bg-gray-200"></div>
+          <div className="p-6">
+            <div className="h-6 bg-gray-200 rounded mb-2"></div>
+            <div className="h-4 bg-gray-200 rounded mb-4"></div>
+            <div className="h-8 bg-gray-200 rounded mb-4"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = () => (
+    <div className="text-center py-12">
+      <div className="text-red-600 mb-4">
+        <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+        </svg>
+      </div>
+      <h3 className="text-lg font-semibold text-organic-text mb-2">Unable to Load Products</h3>
+      <p className="text-organic-text opacity-75 mb-4">Please check your connection and try again</p>
+      <button 
+        onClick={() => {
+          fetchProducts();
+          fetchFeaturedProducts();
+        }}
+        className="bg-organic-primary text-white px-6 py-2 rounded-lg hover:opacity-90 transition-all"
+      >
+        Retry
+      </button>
+    </div>
+  );
 
   return (
     <div className="min-h-screen">
@@ -26,23 +152,42 @@ export default function Home() {
         
         {/* Hero Content */}
         <div className="relative z-10 text-center max-w-5xl px-6 animate-fade-in">
-          <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 tracking-wide leading-tight text-organic-white">
-            Experience Pure<br />
-            <span className="text-organic-highlight">Local Goodness</span>
+          <h1 className="font-display text-5xl md:text-7xl font-bold mb-6 tracking-wide leading-tight text-nyano-brown">
+            Nyano
           </h1>
-          <p className="text-xl md:text-2xl mb-8 font-light max-w-3xl mx-auto leading-relaxed text-organic-white">
-            Handpicked, Organically Grown in the Himalayas
-          </p>
+          <div className="relative mb-8">
+            <p className="font-display text-2xl md:text-3xl italic text-nyano-terracotta bg-nyano-cream bg-opacity-80 backdrop-blur-sm px-6 py-2 rounded-full inline-block shadow-md border border-nyano-terracotta border-opacity-30">
+              nyā-nō
+            </p>
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-nyano-marigold rounded-full animate-pulse"></div>
+          </div>
+          <div className="mb-6">
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-2 text-nyano-brown">
+              Experience Pure
+            </h2>
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-4 text-nyano-brown">
+              Local Goodness
+            </h2>
+            <h2 className="font-display text-3xl md:text-5xl font-bold mb-4 text-nyano-brown">
+              of Himalayas
+            </h2>
+          </div>
           <div className="flex flex-col sm:flex-row gap-6 justify-center">
             <Link 
               to="/shop" 
-              className="btn-primary inline-block px-10 py-4 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg"
+              className="inline-block bg-nyano-terracotta text-nyano-cream font-semibold px-10 py-4 rounded-full text-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:bg-nyano-terracotta-dark"
             >
-              Shop Now
+              Explore the Collection
             </Link>
             <Link 
-              to="#why-ramro" 
-              className="btn-secondary inline-block px-10 py-4 rounded-full text-lg transition-all duration-300 border-2 border-organic-white text-organic-white hover:bg-organic-white hover:text-organic-text backdrop-blur-sm"
+              to="/artisans" 
+              className="inline-block px-10 py-4 rounded-full text-lg transition-all duration-300 border-2 border-nyano-brown text-nyano-brown hover:bg-nyano-brown hover:text-nyano-cream backdrop-blur-sm"
+            >
+              Meet Our Artisans
+            </Link>
+            <Link 
+              to="/about" 
+              className="inline-block px-10 py-4 rounded-full text-lg transition-all duration-300 border-2 border-nyano-brown text-nyano-brown hover:bg-nyano-brown hover:text-nyano-cream backdrop-blur-sm"
             >
               Learn More
             </Link>
@@ -89,80 +234,120 @@ export default function Home() {
       </section>
 
       {/* Featured Products Section */}
-      <section className="py-20 bg-organic-white">
+      <section className="py-20 bg-nyano-cream">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-organic-text mb-4">
+            <h2 className="font-display text-4xl md:text-5xl font-bold text-nyano-brown mb-4">
               Featured Products
             </h2>
-            <p className="text-xl text-organic-text opacity-75 max-w-2xl mx-auto">
-              Discover our handpicked selection of authentic Himalayan treasures
+            <p className="text-xl text-nyano-brown opacity-75 max-w-2xl mx-auto">
+              Discover our handpicked selection of authentic treasures
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product, index) => (
-              <div 
-                key={product.id} 
-                className="group bg-organic-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="relative overflow-hidden">
-                  <img 
-                    src={product.image} 
-                    alt={product.name} 
-                    className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  {/* Product Badge */}
-                  <div className="absolute top-4 left-4">
-                    {product.category === 'grains' && (
-                      <span className="bg-organic-highlight text-organic-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                        🌾 Organic
-                      </span>
-                    )}
-                    {product.category === 'honey' && (
-                      <span className="bg-organic-primary text-organic-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                        🍯 Pure
-                      </span>
-                    )}
-                    {product.category === 'pickle' && (
-                      <span className="bg-organic-primary text-organic-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                        🌶️ Traditional
-                      </span>
-                    )}
-                  </div>
-                  
-                  {/* Rating Stars */}
-                  <div className="absolute top-4 right-4 bg-organic-white bg-opacity-90 rounded-full px-2 py-1">
-                    <div className="flex items-center">
-                      <StarIcon className="w-4 h-4 text-organic-primary fill-current" />
-                      <span className="text-sm font-semibold ml-1">{product.rating || 4.8}</span>
-                    </div>
-                  </div>
+          {/* Simple 2-Product Layout */}
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* Rice Product */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="relative overflow-hidden">
+                <ResponsiveImage
+                  src="https://images.pexels.com/photos/33239/wheat-field-wheat-cereals-grain.jpg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Organic Red Rice"
+                  className="w-full h-64 hover:scale-110 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  priority={true}
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  priority={true}
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="bg-nyano-forest text-nyano-cream px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                    🌾 Organic
+                  </span>
                 </div>
-                
-                <div className="p-6">
-                  <h3 className="font-display text-xl font-bold mb-2 text-organic-text group-hover:text-organic-primary">
-                    {product.name}
-                  </h3>
-                  <p className="text-organic-text opacity-75 mb-4 text-sm leading-relaxed">
-                    {product.description}
-                  </p>
-                  <div className="flex items-center justify-between mb-4">
-                    <span className="font-bold text-2xl text-organic-text">
-                      {formatCurrency(product.price)}
-                    </span>
-                    <Link 
-                      to={`/products/${product.id}`}
-                      className="text-organic-primary hover:text-organic-text text-sm font-semibold underline"
-                    >
-                      View Details
-                    </Link>
+                <div className="absolute top-4 right-4 bg-nyano-cream bg-opacity-90 rounded-full px-2 py-1">
+                  <div className="flex items-center">
+                    <StarIcon className="w-4 h-4 text-nyano-terracotta fill-current" />
+                    <span className="text-sm font-semibold ml-1">4.8</span>
                   </div>
-                  <AddToCartButton product={product} className="w-full" />
                 </div>
               </div>
-            ))}
+              <div className="p-6">
+                <h3 className="font-display text-xl font-bold mb-2 text-nyano-brown">
+                  Organic Red Rice
+                </h3>
+                <p className="text-nyano-brown opacity-75 mb-4 text-sm leading-relaxed">
+                  Nutrient-rich, farm to table red rice from Himalayan valleys, grown without chemicals in terraced fields.
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-bold text-2xl text-nyano-forest">
+                    ₹450
+                  </span>
+                  <Link 
+                    to="/shop"
+                    className="text-nyano-terracotta hover:text-nyano-brown text-sm font-semibold underline"
+                  >
+                    View Details
+                  </Link>
+                </div>
+                <Link 
+                  to="/shop"
+                  className="w-full bg-nyano-terracotta text-nyano-cream font-semibold py-3 px-6 rounded-lg hover:bg-nyano-terracotta-dark transition-all duration-200 text-center block"
+                >
+                  Add to Cart
+                </Link>
+              </div>
+            </div>
+
+            {/* Wheat Product */}
+            <div className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2">
+              <div className="relative overflow-hidden">
+                <ResponsiveImage
+                  src="https://images.pexels.com/photos/4198015/pexels-photo-4198015.jpeg?auto=compress&cs=tinysrgb&w=800"
+                  alt="Himalayan Buckwheat"
+                  className="w-full h-64 hover:scale-110 transition-transform duration-300"
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  priority={true}
+                  sizes="(max-width: 768px) 100vw, 400px"
+                  priority={true}
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="bg-nyano-forest text-nyano-cream px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                    🌾 Gluten Free
+                  </span>
+                </div>
+                <div className="absolute top-4 right-4 bg-nyano-cream bg-opacity-90 rounded-full px-2 py-1">
+                  <div className="flex items-center">
+                    <StarIcon className="w-4 h-4 text-nyano-terracotta fill-current" />
+                    <span className="text-sm font-semibold ml-1">4.6</span>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <h3 className="font-display text-xl font-bold mb-2 text-nyano-brown">
+                  Himalayan Buckwheat
+                </h3>
+                <p className="text-nyano-brown opacity-75 mb-4 text-sm leading-relaxed">
+                  Gluten-free, sustainably harvested buckwheat from high altitudes, perfect for traditional pancakes and porridge.
+                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-bold text-2xl text-nyano-forest">
+                    ₹380
+                  </span>
+                  <Link 
+                    to="/shop"
+                    className="text-nyano-terracotta hover:text-nyano-brown text-sm font-semibold underline"
+                  >
+                    View Details
+                  </Link>
+                </div>
+                <Link 
+                  to="/shop"
+                  className="w-full bg-nyano-terracotta text-nyano-cream font-semibold py-3 px-6 rounded-lg hover:bg-nyano-terracotta-dark transition-all duration-200 text-center block"
+                >
+                  Add to Cart
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

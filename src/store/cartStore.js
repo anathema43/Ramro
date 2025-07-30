@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 import { useAuthStore } from "./authStore";
 
@@ -10,6 +10,135 @@ export const useCartStore = create(
       cart: [],
       loading: false,
       error: null,
+      unsubscribe: null,
+
+      // Real-time cart synchronization
+      subscribeToCart: () => {
+        const { currentUser } = useAuthStore.getState();
+        if (!currentUser) return;
+
+        const { unsubscribe: currentUnsub } = get();
+        if (currentUnsub) {
+          currentUnsub();
+        }
+
+        const unsubscribe = onSnapshot(
+          doc(db, "carts", currentUser.uid),
+          (doc) => {
+            if (doc.exists()) {
+              const cartData = doc.data();
+              set({ 
+                cart: cartData.items || [], 
+                loading: false,
+                error: null 
+              });
+            } else {
+              set({ cart: [], loading: false });
+            }
+          },
+          (error) => {
+            console.error("Error listening to cart changes:", error);
+            set({ error: error.message, loading: false });
+          }
+        );
+
+        set({ unsubscribe });
+        return unsubscribe;
+      },
+
+      unsubscribeFromCart: () => {
+        const { unsubscribe } = get();
+        if (unsubscribe) {
+          unsubscribe();
+          set({ unsubscribe: null });
+        }
+      },
+      unsubscribe: null,
+
+      // Real-time cart synchronization
+      subscribeToCart: () => {
+        const { currentUser } = useAuthStore.getState();
+        if (!currentUser) return;
+
+        const { unsubscribe: currentUnsub } = get();
+        if (currentUnsub) {
+          currentUnsub();
+        }
+
+        const unsubscribe = onSnapshot(
+          doc(db, "carts", currentUser.uid),
+          (doc) => {
+            if (doc.exists()) {
+              const cartData = doc.data();
+              set({ 
+                cart: cartData.items || [], 
+                loading: false,
+                error: null 
+              });
+            } else {
+              set({ cart: [], loading: false });
+            }
+          },
+          (error) => {
+            console.error("Error listening to cart changes:", error);
+            set({ error: error.message, loading: false });
+          }
+        );
+
+        set({ unsubscribe });
+        return unsubscribe;
+      },
+
+      unsubscribeFromCart: () => {
+        const { unsubscribe } = get();
+        if (unsubscribe) {
+          unsubscribe();
+          set({ unsubscribe: null });
+        }
+      },
+      unsubscribe: null,
+
+      // Real-time cart synchronization
+      subscribeToCart: () => {
+        const { currentUser } = useAuthStore.getState();
+        if (!currentUser) return;
+
+        const { unsubscribe: currentUnsub } = get();
+        if (currentUnsub) {
+          currentUnsub();
+        }
+
+        const unsubscribe = onSnapshot(
+          doc(db, "carts", currentUser.uid),
+          (doc) => {
+            if (doc.exists()) {
+              const cartData = doc.data();
+              set({ 
+                cart: cartData.items || [], 
+                loading: false,
+                error: null 
+              });
+            } else {
+              set({ cart: [], loading: false });
+            }
+          },
+          (error) => {
+            console.error("Error listening to cart changes:", error);
+            set({ error: error.message, loading: false });
+          }
+        );
+
+        set({ unsubscribe });
+        return unsubscribe;
+      },
+
+      unsubscribeFromCart: () => {
+        const { unsubscribe } = get();
+        if (unsubscribe) {
+          unsubscribe();
+          set({ unsubscribe: null });
+        }
+      },
 
       loadCart: async () => {
         const { currentUser } = useAuthStore.getState();
@@ -23,6 +152,15 @@ export const useCartStore = create(
           } else {
             set({ loading: false });
           }
+          
+          // Start real-time subscription
+          get().subscribeToCart();
+          
+          // Start real-time subscription
+          get().subscribeToCart();
+          
+          // Start real-time subscription
+          get().subscribeToCart();
         } catch (error) {
           set({ error: error.message, loading: false });
         }
@@ -41,8 +179,10 @@ export const useCartStore = create(
           });
         } catch (error) {
           console.error("Error saving cart:", error);
+          set({ error: error.message });
         }
       },
+
       addToCart: (product, qty = 1) => {
         set((state) => {
           const exists = state.cart.find((item) => item.id === product.id);
@@ -59,7 +199,7 @@ export const useCartStore = create(
             newCart = { cart: [...state.cart, { ...product, quantity: qty }] };
           }
           
-          // Save to Firestore
+          // Save to Firestore (will trigger real-time update)
           setTimeout(() => get().saveCart(), 100);
           return newCart;
         });
@@ -113,12 +253,14 @@ export const useCartStore = create(
 
       getShipping: () => {
         const total = get().getTotalPrice();
-        return total > 500 ? 0 : 50; // Free shipping over $500
+        return total > 500 ? 0 : 50; // Free shipping over ₹500
       },
 
       getGrandTotal: () => {
         return get().getSubtotal() + get().getTax() + get().getShipping();
       },
+
+      clearError: () => set({ error: null }),
     }),
     {
       name: "ramro-cart-storage",

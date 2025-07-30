@@ -1,5 +1,13 @@
 # 🏗️ System Architecture - Ramro E-commerce Platform
 
+## 🔒 **SECURITY-ENHANCED ARCHITECTURE**
+**CRITICAL UPDATES**: The system architecture now includes enterprise-grade security:
+- ✅ **Server-side Role Verification** - No client-side admin access
+- ✅ **Secure File Upload Pipeline** - Strict validation and size limits
+- ✅ **Single Source of Truth** - Firestore-only data architecture
+- ✅ **Real-time Security** - Cross-tab cart sync with proper validation
+- ✅ **Input Sanitization** - XSS and injection attack prevention
+
 ## 🎯 **High-Level Architecture Overview**
 
 This document provides a comprehensive view of the Ramro e-commerce system architecture, including all components, data flows, and integrations.
@@ -27,34 +35,39 @@ graph TB
         H[Tailwind CSS]
         I[Zustand State Management]
         J[React Router]
+        K[Responsive Image Optimization System]
     end
     
     subgraph "Authentication & Security"
         K[Firebase Auth]
         L[JWT Tokens]
-        M[Role-Based Access]
+        M[Server-side Role Verification]
         N[Security Rules]
+        O[Input Validation]
+        P[File Upload Security]
     end
     
     subgraph "Backend Services"
-        O[Firebase Firestore]
-        P[Firebase Storage]
-        Q[Firebase Functions]
-        R[Firebase Hosting]
+        Q[Firebase Firestore - Single Source]
+        R[Firebase Storage - Secure]
+        S[Firebase Functions]
+        T[Firebase Hosting]
     end
     
     subgraph "External APIs"
-        S[Razorpay Payment Gateway]
-        T[Email Service Provider]
-        U[Analytics Service]
-        V[Monitoring Service]
+        U[Razorpay Payment Gateway]
+        V[Email Service Provider]
+        W[Analytics Service]
+        X[Monitoring Service]
+        Y[Image CDN Services]
     end
     
     subgraph "Data Storage"
-        W[Firestore Collections]
-        X[File Storage]
-        Y[Cache Layer]
-        Z[Backup Storage]
+        Z[Firestore Collections - Validated]
+        AA[Secure File Storage with Auto-Resize]
+        BB[Real-time Cache Layer]
+        CC[Backup Storage]
+        DD[Optimized Image Storage]
     end
     
     A --> D
@@ -65,23 +78,25 @@ graph TB
     F --> G
     
     G --> K
-    G --> O
-    G --> S
+    G --> Q
+    G --> U
     
     K --> L
     L --> M
     M --> N
+    N --> O
+    O --> P
     
-    O --> W
-    P --> X
-    Q --> T
-    R --> D
+    Q --> Y
+    R --> Z
+    S --> V
+    T --> D
     
-    Q --> U
-    Q --> V
+    S --> W
+    S --> X
     
-    W --> Y
-    W --> Z
+    Y --> AA
+    Y --> BB
 ```
 
 ---
@@ -195,12 +210,14 @@ erDiagram
     PRODUCTS ||--o{ WISHLIST_ITEMS : saved_in
     PRODUCTS ||--o{ REVIEWS : receives
     PRODUCTS ||--o{ INVENTORY_LOGS : tracks
+    PRODUCTS ||--o{ ARTISANS : created_by
     
     ORDERS ||--o{ ORDER_ITEMS : contains
     ORDERS ||--o{ PAYMENTS : processed_via
     ORDERS ||--o{ SHIPPING_UPDATES : has
     
     CATEGORIES ||--o{ PRODUCTS : categorizes
+    ARTISANS ||--o{ PRODUCTS : creates
     
     USERS {
         string uid PK
@@ -230,6 +247,31 @@ erDiagram
         boolean featured
         boolean active
         object metadata
+        string artisanId FK
+        string artisan
+        timestamp createdAt
+        timestamp updatedAt
+    }
+    
+    ARTISANS {
+        string id PK
+        string name
+        string title
+        string location
+        string region
+        number experience
+        string profileImage
+        string shortBio
+        string story
+        array specialties
+        array techniques
+        array values
+        string culturalHeritage
+        number familyMembers
+        number rating
+        number reviewCount
+        boolean featured
+        number productCount
         timestamp createdAt
         timestamp updatedAt
     }
@@ -334,6 +376,7 @@ graph LR
         A[Product Listing] --> B[Category Filter]
         A --> C[Search Query]
         A --> D[Pagination]
+        A --> AA[Artisan Filter]
         
         E[User Dashboard] --> F[User Orders]
         E --> G[User Profile]
@@ -343,6 +386,15 @@ graph LR
         I --> K[All Products]
         I --> L[All Users]
         I --> M[Analytics Data]
+        I --> BB[All Artisans]
+        
+        CC[Artisan Directory] --> DD[Featured Artisans]
+        CC --> EE[Regional Filter]
+        CC --> FF[Artisan Search]
+        
+        GG[Artisan Profile] --> HH[Artisan Products]
+        GG --> II[Cultural Heritage]
+        GG --> JJ[Impact Stories]
     end
     
     subgraph "Write Patterns"
@@ -352,12 +404,20 @@ graph LR
         R --> T[Update Inventory]
         U[Admin Actions] --> V[Update Product]
         U --> W[Update Order Status]
+        U --> KK[Manage Artisans]
+        
+        LL[Artisan Management] --> MM[Create Artisan Profile]
+        LL --> NN[Update Cultural Content]
+        LL --> OO[Link Products to Artisans]
     end
     
     subgraph "Real-time Updates"
         X[Cart Changes] --> Y[Real-time Sync]
         Z[Order Status] --> AA[Live Updates]
         BB[Inventory Changes] --> CC[Stock Alerts]
+        DD[Cross-tab Synchronization] --> EE[onSnapshot Listeners]
+        FF[Wishlist Updates] --> GG[Real-time Sync]
+        PP[Artisan Content] --> QQ[Cultural Updates]
     end
 ```
 
@@ -402,36 +462,39 @@ sequenceDiagram
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Helper function for server-side admin verification
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    
     // User data access
     match /users/{userId} {
       allow read, write: if request.auth != null && 
-        request.auth.uid == userId;
+        request.auth.uid == userId &&
+        isValidUserData();
     }
     
-    // Product access (public read, admin write)
+    // Product access (public read, server-side admin write only)
     match /products/{productId} {
       allow read: if true;
       allow write: if isAdmin();
     }
     
-    // Order access (user owns order)
+    // Order access (user owns order or admin)
     match /orders/{orderId} {
-      allow read, write: if request.auth != null && 
+      allow read: if request.auth != null && 
+        (request.auth.uid == resource.data.userId || isAdmin());
+      allow write: if request.auth != null && 
         request.auth.uid == resource.data.userId;
       allow create: if request.auth != null && 
         request.auth.uid == request.resource.data.userId;
     }
     
-    // Admin-only collections
+    // Admin-only collections with strict validation
     match /admin/{document=**} {
       allow read, write: if isAdmin();
-    }
-    
-    // Helper function
-    function isAdmin() {
-      return request.auth != null && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
     }
   }
 }

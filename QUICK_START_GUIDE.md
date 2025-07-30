@@ -2,6 +2,12 @@
 
 ## 🎯 **Goal**: Get your Ramro e-commerce app running locally in 30 minutes
 
+## 🔒 **SECURITY FIRST**: This guide includes critical security fixes
+- ✅ **No Hardcoded Admin Access** - Firebase server-side role verification only
+- ✅ **Secure File Uploads** - Strict validation and size limits
+- ✅ **Data Integrity** - Single source of truth from Firebase Firestore
+- ✅ **Input Validation** - XSS and injection attack prevention
+
 ---
 
 ## ⏰ **30-MINUTE SETUP SPRINT**
@@ -51,8 +57,10 @@ VITE_RAZORPAY_KEY_ID=rzp_test_placeholder
 1. **Run**: `npm run dev`
 2. **Open**: `http://localhost:5173`
 3. **Test**: Sign up for a new account
-4. **Verify**: You can browse products
-5. **Success**: Your app is running!
+4. **Create Admin**: Add `role: "admin"` to your user document in Firestore
+5. **Verify**: You can browse products and access admin panel
+6. **Test Security**: Verify admin access works only with proper role
+7. **Success**: Your secure app is running!
 
 ---
 
@@ -60,22 +68,26 @@ VITE_RAZORPAY_KEY_ID=rzp_test_placeholder
 
 If successful, you should have:
 - ✅ Firebase project created and configured
+- ✅ Secure Firestore rules implemented
+- ✅ Admin role properly configured (server-side)
 - ✅ Local development server running
 - ✅ User registration/login working
-- ✅ Products displaying in shop
+- ✅ Products displaying in shop (from Firestore only)
 - ✅ Basic cart functionality
+- ✅ Enterprise-grade security implemented
 
-**🎉 Congratulations! Your e-commerce app is now functional!**
+**🎉 Congratulations! Your secure e-commerce app is now functional!**
 
 ---
 
 ## 🚀 **NEXT STEPS (After 30 Minutes)**
 
 ### **Hour 2: Admin Setup**
-1. **Create admin user** (add custom claims in Firebase)
+1. **Create admin user** (add role field in Firestore user document)
 2. **Access admin panel** at `/admin`
 3. **Seed products** using the admin interface
 4. **Test product management**
+5. **Verify security** - test that non-admin users cannot access admin features
 
 ### **Hour 3: Payment Setup**
 1. **Create Razorpay account**

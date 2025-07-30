@@ -35,27 +35,53 @@ export const useProductStore = create((set, get) => ({
       const categories = [...new Set(products.map(p => p.category))];
       
       set({ products, categories, loading: false });
+      return products;
     } catch (error) {
       set({ error: error.message, loading: false });
+      throw error;
     }
   },
 
   fetchFeaturedProducts: async () => {
-    set({ loading: true, error: null });
+    set({ error: null });
     try {
       const q = query(
         collection(db, "products"),
         where("featured", "==", true),
-        limit(4)
+        orderBy("createdAt", "desc"),
+        limit(6)
       );
       const querySnapshot = await getDocs(q);
       const featuredProducts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
       }));
-      set({ featuredProducts, loading: false });
+      
+      // If no featured products, get the newest 4 products
+      if (featuredProducts.length === 0) {
+        const fallbackQuery = query(
+          collection(db, "products"),
+          orderBy("createdAt", "desc"),
+          limit(4)
+        );
+        const fallbackSnapshot = await getDocs(fallbackQuery);
+        const fallbackProducts = fallbackSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        set({ featuredProducts: fallbackProducts });
+        return fallbackProducts;
+      }
+      
+      set({ featuredProducts });
+      return featuredProducts;
     } catch (error) {
-      set({ error: error.message, loading: false });
+      set({ error: error.message });
+      // Fallback to regular products if featured fetch fails
+      const { products } = get();
+      const fallbackFeatured = products.slice(0, 4);
+      set({ featuredProducts: fallbackFeatured });
+      return fallbackFeatured;
     }
   },
 
@@ -80,8 +106,8 @@ export const useProductStore = create((set, get) => ({
     
     let filtered = products.filter(product => {
       const matchesSearch = !searchTerm || 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchTerm.toLowerCase());
+        (product.name && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (product.description && product.description.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesCategory = category === 'all' || product.category === category;
       
@@ -100,7 +126,7 @@ export const useProductStore = create((set, get) => ({
         case 'newest':
           return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
         default:
-          return a.name.localeCompare(b.name);
+          return (a.name || '').localeCompare(b.name || '');
       }
     });
 

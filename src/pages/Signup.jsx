@@ -33,7 +33,7 @@ export default function Signup() {
         <input className="w-full border rounded p-2 mb-3" value={name} onChange={e => setName(e.target.value)} type="text" placeholder="Full Name" required />
         <input className="w-full border rounded p-2 mb-3" value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email" required />
         <input className="w-full border rounded p-2 mb-4" value={password} onChange={e => setPassword(e.target.value)} type="password" placeholder="Password (min 6 chars)" required />
-        <button className="w-full bg-himalaya text-white py-2 rounded hover:bg-himalaya-dark" type="submit">Sign Up</button>
+        <button className="w-full bg-organic-primary text-white py-2 rounded hover:opacity-90 transition-all" type="submit">Sign Up</button>
         <div className="mt-4 text-center">
           Already have an account? <Link to="/login" className="text-himalaya underline">Login</Link>
         </div>

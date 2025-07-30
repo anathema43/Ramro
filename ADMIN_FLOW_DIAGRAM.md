@@ -1,5 +1,13 @@
 # 👨‍💼 Admin Flow Diagram - Ramro E-commerce
 
+## 🔒 **SECURE ADMIN ARCHITECTURE**
+**CRITICAL SECURITY UPDATE**: Admin access is now enterprise-grade secure:
+- ✅ **Server-side Role Verification** - No hardcoded admin emails
+- ✅ **Firestore Rule Enforcement** - All admin actions validated server-side
+- ✅ **Secure File Uploads** - Admin-only with strict validation
+- ✅ **Audit Trail** - All admin actions logged and tracked
+- ✅ **Access Control** - Proper authentication and authorization
+
 ## 🎯 **Admin Dashboard Architecture**
 
 This document provides a detailed visual representation of the admin workflow and management system for the Ramro e-commerce platform.
@@ -21,10 +29,13 @@ This document provides a detailed visual representation of the admin workflow an
 flowchart TD
     AdminLogin[Admin Login Attempt] --> AuthCheck{Valid Credentials?}
     AuthCheck -->|No| LoginFailed[Access Denied]
-    AuthCheck -->|Yes| RoleCheck{Admin Role?}
+    AuthCheck -->|Yes| RoleCheck{Server-side Admin Role Check}
     
-    RoleCheck -->|No| AccessDenied[Insufficient Permissions]
-    RoleCheck -->|Yes| AdminDashboard[Admin Dashboard]
+    RoleCheck -->|No| AccessDenied[Access Denied - Not Admin]
+    RoleCheck -->|Yes| FirestoreValidation[Validate Role in Firestore]
+    
+    FirestoreValidation -->|Invalid| AccessDenied
+    FirestoreValidation -->|Valid| AdminDashboard[Admin Dashboard]
     
     AdminDashboard --> ProductMgmt[Product Management]
     AdminDashboard --> OrderMgmt[Order Management]
@@ -39,9 +50,13 @@ flowchart TD
 stateDiagram-v2
     [*] --> ProductDashboard
     
-    ProductDashboard --> ViewProducts: View All Products
-    ProductDashboard --> AddProduct: Add New Product
-    ProductDashboard --> BulkActions: Bulk Operations
+    ProductDashboard --> SecurityCheck: Verify Admin Role
+    SecurityCheck --> AccessDenied: Not Admin
+    SecurityCheck --> ProductActions: Admin Verified
+    
+    ProductActions --> ViewProducts: View All Products
+    ProductActions --> AddProduct: Add New Product
+    ProductActions --> BulkActions: Bulk Operations
     
     ViewProducts --> EditProduct: Select Product
     ViewProducts --> DeleteProduct: Delete Product
@@ -52,13 +67,17 @@ stateDiagram-v2
     
     ProductForm --> ValidateData: Validate Input
     ValidateData --> ProductForm: Validation Failed
-    ValidateData --> SaveProduct: Validation Passed
+    ValidateData --> ServerValidation: Client Validation Passed
+    ServerValidation --> SaveProduct: Server Validation Passed
+    ServerValidation --> ProductForm: Server Validation Failed
     
-    SaveProduct --> UpdateInventory: Update Stock Count
+    SaveProduct --> UpdateFirestore: Save to Single Source
+    UpdateFirestore --> UpdateInventory: Update Stock Count
     UpdateInventory --> ProductDashboard: Return to Dashboard
     
     DeleteProduct --> ConfirmDelete: Confirm Action
-    ConfirmDelete --> ProductDashboard: Product Deleted
+    ConfirmDelete --> ServerDelete: Server-side Delete
+    ServerDelete --> ProductDashboard: Product Deleted
     ConfirmDelete --> ViewProducts: Cancel Delete
     
     ManageStock --> StockUpdate: Update Quantities
@@ -576,38 +595,39 @@ Mobile Order Management
 
 ### **Role-Based Access Control**
 ```
-Admin Permission Matrix:
+Secure Admin Permission Matrix (Server-side Enforced):
 ┌─────────────────────────────────────────────────────────────┐
-│ Permission Level    │ Super Admin │ Admin │ Manager │ Staff │
+│ Permission Level    │ Super Admin │ Admin │ Customer│ Guest │
 │ ═══════════════════════════════════════════════════════════ │
-│ View Dashboard      │     ✅      │  ✅   │   ✅    │  ✅   │
-│ Manage Products     │     ✅      │  ✅   │   ✅    │  ✅   │
-│ Process Orders      │     ✅      │  ✅   │   ✅    │  ✅   │
-│ View All Orders     │     ✅      │  ✅   │   ✅    │  ❌   │
+│ View Dashboard      │     ✅      │  ✅   │   ❌    │  ❌   │
+│ Manage Products     │     ✅      │  ✅   │   ❌    │  ❌   │
+│ Process Orders      │     ✅      │  ✅   │   ❌    │  ❌   │
+│ View All Orders     │     ✅      │  ✅   │   ❌    │  ❌   │
 │ Manage Users        │     ✅      │  ✅   │   ❌    │  ❌   │
-│ View Analytics      │     ✅      │  ✅   │   ✅    │  ❌   │
+│ View Analytics      │     ✅      │  ✅   │   ❌    │  ❌   │
+│ Upload Files        │     ✅      │  ✅   │   ❌    │  ❌   │
 │ System Settings     │     ✅      │  ❌   │   ❌    │  ❌   │
-│ Financial Reports   │     ✅      │  ✅   │   ❌    │  ❌   │
-│ Backup & Security   │     ✅      │  ❌   │   ❌    │  ❌   │
 │ User Role Management│     ✅      │  ❌   │   ❌    │  ❌   │
+│                     │             │       │         │       │
+│ SECURITY NOTE: All permissions validated server-side      │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### **Admin Activity Logging**
 ```
-Admin Action Log:
+Secure Admin Action Log (Server-side Tracked):
 ┌─────────────────────────────────────────────────────────────┐
 │ 📝 Admin Activity Log                                       │
 │ ═══════════════════════════════════════════════════════════ │
-│ Date/Time        │ Admin User    │ Action           │ Details│
+│ Date/Time        │ Admin User    │ Action           │ Verified│
 │ ─────────────────────────────────────────────────────────── │
-│ Mar 15, 2:45 PM  │ admin@ramro   │ Product Updated  │ SKU-001│
-│ Mar 15, 2:30 PM  │ admin@ramro   │ Order Shipped    │ #ORD156│
-│ Mar 15, 2:15 PM  │ manager@ramro │ Stock Updated    │ +20 WH │
-│ Mar 15, 2:00 PM  │ admin@ramro   │ User Role Change │ john@..│
-│ Mar 15, 1:45 PM  │ admin@ramro   │ Login            │ Success│
+│ Mar 15, 2:45 PM  │ admin-uid-123 │ Product Updated  │ ✅ Role│
+│ Mar 15, 2:30 PM  │ admin-uid-123 │ Order Shipped    │ ✅ Role│
+│ Mar 15, 2:15 PM  │ admin-uid-456 │ Stock Updated    │ ✅ Role│
+│ Mar 15, 2:00 PM  │ user-uid-789  │ Admin Access     │ ❌ Deny│
+│ Mar 15, 1:45 PM  │ admin-uid-123 │ Login            │ ✅ Role│
 │ ─────────────────────────────────────────────────────────── │
-│ [📥 Export Log] [🔍 Filter] [📊 Generate Report]          │
+│ [📥 Export Log] [🔍 Filter] [🔒 Security Report]          │
 └─────────────────────────────────────────────────────────────┘
 ```
 

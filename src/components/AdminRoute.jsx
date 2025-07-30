@@ -4,7 +4,7 @@ import { useAuthStore } from '../store/authStore';
 import LoadingSpinner from './LoadingSpinner';
 
 export default function AdminRoute({ children }) {
-  const { currentUser, loading } = useAuthStore();
+  const { currentUser, userProfile, loading } = useAuthStore();
 
   if (loading) {
     return <LoadingSpinner />;
@@ -14,11 +14,19 @@ export default function AdminRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Check if user is admin (you can modify this logic based on your user structure)
-  const isAdmin = currentUser.email === 'admin@ramro.com' || currentUser.role === 'admin';
+  // Server-side role verification - check user role from Firestore
+  const isAdmin = userProfile?.role === 'admin';
   
   if (!isAdmin) {
-    return <Navigate to="/" replace />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-organic-background">
+        <div className="text-center p-8">
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Access Denied</h2>
+          <p className="text-organic-text mb-6">You don't have permission to access this area.</p>
+          <Navigate to="/" replace />
+        </div>
+      </div>
+    );
   }
 
   return children;

@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { HashRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import ProductDetail from "./pages/ProductDetail";
@@ -13,40 +14,56 @@ import Orders from "./pages/Orders";
 import Wishlist from "./pages/Wishlist";
 import Admin from "./pages/Admin";
 import About from "./pages/About";
+import DevelopmentRoadmap from "./pages/DevelopmentRoadmap";
 import ShippingPolicy from "./pages/ShippingPolicy";
 import ReturnPolicy from "./pages/ReturnPolicy";
 import FAQ from "./pages/FAQ";
 import Contact from "./pages/Contact";
+import ArtisansDirectory from "./pages/ArtisansDirectory";
+import ArtisanProfile from "./pages/ArtisanProfile";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
+import ErrorBoundary from "./components/ErrorBoundary";
 import { useAuthStore } from "./store/authStore";
 import { useCartStore } from "./store/cartStore";
+import { useWishlistStore } from "./store/wishlistStore";
 import LoadingSpinner from "./components/LoadingSpinner";
 
 function App() {
   const { fetchUser, loading } = useAuthStore();
-  const { loadCart } = useCartStore();
+  const { loadCart, subscribeToCart } = useCartStore();
+  const { loadWishlist, subscribeToWishlist } = useWishlistStore();
   
   useEffect(() => {
     try {
       const unsub = fetchUser();
       loadCart();
+      loadWishlist();
+      
+      // Set up real-time listeners when user is authenticated
+      const { currentUser } = useAuthStore.getState();
+      if (currentUser) {
+        subscribeToCart();
+        subscribeToWishlist();
+      }
+      
       return () => unsub && unsub();
     } catch (error) {
       console.log("Auth not configured yet");
     }
-  }, [fetchUser, loadCart]);
+  }, [fetchUser, loadCart, loadWishlist, subscribeToCart, subscribeToWishlist]);
 
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return (
-    <Router>
-      <div className="min-h-screen bg-organic-background">
-        <Navbar />
-        <main>
-          <Routes>
+    <ErrorBoundary>
+      <Router>
+        <div className="min-h-screen bg-organic-background">
+          <Navbar />
+          <main>
+            <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/shop" element={<Shop />} />
@@ -61,6 +78,13 @@ function App() {
             <Route path="/return-policy" element={<ReturnPolicy />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/contact" element={<Contact />} />
+            
+            {/* Artisan Routes */}
+            <Route path="/artisans" element={<ArtisansDirectory />} />
+            <Route path="/artisans/:id" element={<ArtisanProfile />} />
+            
+            {/* Development Roadmap */}
+            <Route path="/roadmap" element={<DevelopmentRoadmap />} />
             
             {/* Protected Routes */}
             <Route path="/account" element={
@@ -79,9 +103,7 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/wishlist" element={
-              <ProtectedRoute>
                 <Wishlist />
-              </ProtectedRoute>
             } />
             
             {/* Admin Routes */}
@@ -94,9 +116,11 @@ function App() {
             {/* Catch all route */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </main>
-      </div>
-    </Router>
+          </main>
+          <Footer />
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

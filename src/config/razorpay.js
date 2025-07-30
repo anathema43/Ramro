@@ -18,7 +18,7 @@ const isRazorpayConfigured = razorpayConfig.keyId &&
   razorpayConfig.keyId !== '';
 
 if (!isRazorpayConfigured) {
-  console.warn('⚠️ Razorpay key is not configured. Please check your .env file and set VITE_RAZORPAY_KEY_ID.');
+  console.info('ℹ️ Razorpay not configured yet. Payment features will be available once VITE_RAZORPAY_KEY_ID is set.');
 }
 
 // Load Razorpay script

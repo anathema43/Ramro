@@ -1,116 +1,153 @@
 import React, { useState } from "react";
-import products from "../data/products";
+import { useProductStore } from "../store/productStore";
 import ProductCard from "../components/ProductCard";
+import AlgoliaSearch from "../components/AlgoliaSearch";
+import SearchFilters from "../components/SearchFilters";
+import SearchResults from "../components/SearchResults";
 import { MagnifyingGlassIcon, FunnelIcon } from "@heroicons/react/24/outline";
+import { searchService } from "../services/searchService";
 
 export default function Shop() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState("name");
-  const [filterCategory, setFilterCategory] = useState("all");
+  const { products, fetchProducts, loading } = useProductStore();
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  // Filter and sort products
-  const filteredProducts = products
-    .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = filterCategory === "all" || 
-                             product.category === filterCategory ||
-                             product.name.toLowerCase().includes(filterCategory.toLowerCase());
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "price-low":
-          return a.price - b.price;
-        case "price-high":
-          return b.price - a.price;
-        case "rating":
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return a.name.localeCompare(b.name);
+  React.useEffect(() => {
+    // Always fetch products from Firestore - single source of truth
+    fetchProducts();
+  }, [products.length, fetchProducts]);
+
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+    setSearchQuery(results.query || "");
+    setIsSearching(false);
+  };
+
+  const handleSearchClear = () => {
+    setSearchResults(null);
+    setSearchQuery("");
+    setIsSearching(false);
+  };
+
+  const handleFiltersChange = async (filters) => {
+    if (searchQuery) {
+      setIsSearching(true);
+      try {
+        const results = await searchService.searchProducts(searchQuery, filters);
+        setSearchResults({
+          products: results.hits,
+          totalResults: results.nbHits,
+          query: searchQuery,
+          processingTime: results.processingTimeMS,
+          facets: results.facets
+        });
+      } catch (error) {
+        console.error('Filter search error:', error);
+      } finally {
+        setIsSearching(false);
       }
-    });
+    }
+  };
+
+  // Determine what to display
+  const displayProducts = searchResults ? searchResults.products : products;
+  const showSearchResults = searchResults !== null;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50" data-cy="shop-page">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-8">
           <h1 className="text-4xl font-bold text-himalaya-dark mb-2">Shop Ramro Products</h1>
           <p className="text-gray-600">Discover authentic, organic products from the Himalayas</p>
         </div>
-      </div>
+      </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Filters and Search */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            {/* Search */}
-            <div className="relative flex-1 max-w-md">
-              <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-himalaya focus:border-transparent"
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        {loading && !showSearchResults ? (
+          <div className="flex justify-center py-12" role="status" aria-label="Loading products">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-organic-primary"></div>
+            <span className="sr-only">Loading products...</span>
+          </div>
+        ) : (
+          <>
+            {/* Search and Filters */}
+            <section className="bg-white rounded-lg shadow-sm p-6 mb-8" aria-label="Product filters">
+              <div className="space-y-4">
+                {/* Algolia Search */}
+                <div className="flex flex-col md:flex-row gap-4 items-start">
+                  <div className="flex-1">
+                    <AlgoliaSearch
+                      onResults={handleSearchResults}
+                      onClear={handleSearchClear}
+                      className="w-full"
+                    />
+                  </div>
+                  
+                  {/* Search Filters */}
+                  <SearchFilters
+                    onFiltersChange={handleFiltersChange}
+                    facets={searchResults?.facets || {}}
+                  />
+                </div>
+
+                {/* Search Status */}
+                {showSearchResults && (
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <span>
+                      {searchResults.totalResults} results for "{searchQuery}"
+                      {searchResults.processingTime && (
+                        <span className="ml-2">({searchResults.processingTime}ms)</span>
+                      )}
+                    </span>
+                    <button
+                      onClick={handleSearchClear}
+                      className="text-organic-primary hover:text-organic-text"
+                    >
+                      Clear search
+                    </button>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            {/* Search Results or Product Grid */}
+            {showSearchResults ? (
+              <SearchResults
+                results={searchResults}
+                isLoading={isSearching}
+                query={searchQuery}
               />
-            </div>
-
-            {/* Filters */}
-            <div className="flex gap-4 items-center">
-              <div className="flex items-center gap-2">
-                <FunnelIcon className="w-5 h-5 text-gray-500" />
-                <select
-                  value={filterCategory}
-                  onChange={(e) => setFilterCategory(e.target.value)}
-                  className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-himalaya focus:border-transparent"
-                >
-                  <option value="all">All Categories</option>
-                  <option value="pickle">Pickles</option>
-                  <option value="honey">Honey</option>
-                  <option value="spices">Spices</option>
-                </select>
-              </div>
-
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-himalaya focus:border-transparent"
-              >
-                <option value="name">Sort by Name</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Products Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))
-          ) : (
-            <div className="col-span-full text-center py-12">
-              <div className="text-gray-400 mb-4">
-                <MagnifyingGlassIcon className="w-16 h-16 mx-auto" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-600 mb-2">No products found</h3>
-              <p className="text-gray-500">Try adjusting your search or filter criteria</p>
-            </div>
-          )}
-        </div>
-
-        {/* Results Count */}
-        {filteredProducts.length > 0 && (
-          <div className="mt-8 text-center text-gray-600">
-            Showing {filteredProducts.length} of {products.length} products
-          </div>
+            ) : (
+              <section aria-label="Product catalog">
+                {displayProducts.length === 0 ? (
+                  <div className="text-center py-12" data-cy="no-results-message">
+                    <p className="text-gray-500 text-lg">
+                      No products found.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex justify-between items-center mb-4">
+                      <p className="text-gray-600">
+                        Showing {displayProducts.length} of {products.length} products
+                      </p>
+                    </div>
+                    <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" data-cy="product-grid">
+                      {displayProducts.map((product) => (
+                        <li key={product.id}>
+                          <ProductCard product={product} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </section>
+            )}
+          </>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

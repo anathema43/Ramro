@@ -20,8 +20,6 @@ class RazorpayService {
 
   async createOrder(orderData) {
     try {
-      // In a real implementation, this would call your backend API
-      // which would create an order using Razorpay's server-side API
       const response = await fetch('/api/razorpay/create-order', {
         method: 'POST',
         headers: {
@@ -39,13 +37,18 @@ class RazorpayService {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create Razorpay order');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Server error: ${response.status}`;
+        throw new Error(errorMessage);
       }
 
       const order = await response.json();
       return order;
     } catch (error) {
       console.error('Error creating Razorpay order:', error);
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        throw new Error('Network error: Please check your internet connection');
+      }
       throw error;
     }
   }

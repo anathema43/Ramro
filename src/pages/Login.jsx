@@ -58,7 +58,7 @@ export default function Login() {
           </div>
           <button
             type="submit"
-            className="w-full bg-himalaya hover:bg-himalaya-dark text-white font-semibold rounded py-2 transition"
+            className="w-full bg-organic-primary hover:opacity-90 text-white font-semibold rounded py-2 transition"
             data-cy="login-submit"
           >
             Login

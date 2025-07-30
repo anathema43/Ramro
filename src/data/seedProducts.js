@@ -45,6 +45,7 @@ const seedProducts = [
     origin: "Manali, Himachal Pradesh",
     altitude: "3200m",
     artisan: "Laxmi Devi",
+    artisanId: "laxmi-devi-001", // This will be updated after artisan seeding
     cultural_tags: ["Wild Harvested", "Raw Honey", "High Altitude"],
     featured: true,
     sku: "HWH001",
@@ -161,6 +162,7 @@ const seedProducts = [
     origin: "Garhwal Himalayas",
     altitude: "2800m",
     artisan: "Ram Prasad",
+    artisanId: "ram-prasad-001", // This will be updated after artisan seeding
     cultural_tags: ["Wild Harvested", "Unprocessed", "Forest Honey"],
     featured: false,
     sku: "WFH001",

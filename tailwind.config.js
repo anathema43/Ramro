@@ -7,25 +7,36 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Natural Organic Color Palette
+        // Nyano Brand Color Palette
+        nyano: {
+          cream: '#F5F1ED',         // Cream Canvas - Main background
+          terracotta: '#D9734E',    // Terracotta - Primary/Action color
+          forest: '#3E5954',        // Forest Green - Secondary
+          brown: '#4A403A',         // Earthy Brown - Text/Headings
+          marigold: '#F2B705',      // Marigold - Accent/Highlight
+          'brown-light': '#8C7F79', // Muted text
+          'brown-border': '#D1C7BF', // Borders & dividers
+          'terracotta-dark': '#C06141', // Hover state
+        },
+        // Keep organic colors for backward compatibility
         organic: {
-          background: '#FDFBF6',    // Soft off-white beige
-          primary: '#B97D4B',       // Warm earthy brown
-          text: '#333333',          // Dark charcoal grey
-          highlight: '#5E8C31',     // Muted natural green
-          white: '#FFFFFF',         // Pure white for contrast
+          background: '#F5F1ED',    // Map to cream
+          primary: '#D9734E',       // Map to terracotta
+          text: '#4A403A',          // Map to brown
+          highlight: '#3E5954',     // Map to forest
+          white: '#FFFFFF',         // Pure white
         },
         // Status colors maintaining organic feel
         status: {
-          success: '#5E8C31',       // Using highlight green
-          warning: '#D2691E',       // Warm orange
+          success: '#3E5954',       // Using forest green
+          warning: '#F2B705',       // Using marigold
           error: '#C53030',         // Muted red
           info: '#4A90A4'           // Soft blue-grey
         }
       },
       fontFamily: {
-        'display': ['Playfair Display', 'serif'],
-        'body': ['Inter', 'sans-serif'],
+        'display': ['Lora', 'serif'],
+        'body': ['Nunito Sans', 'sans-serif'],
         'cultural': ['Noto Sans Devanagari', 'sans-serif']
       },
       backgroundImage: {

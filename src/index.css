@@ -1,8 +1,5 @@
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Nunito+Sans:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -10,18 +7,25 @@
 
 /* CSS Custom Properties for Organic Color System */
 :root {
-  --organic-background: #FDFBF6;
-  --organic-primary: #B97D4B;
-  --organic-text: #333333;
-  --organic-highlight: #5E8C31;
+  --organic-background: #F5F1ED;
+  --organic-primary: #D9734E;
+  --organic-text: #4A403A;
+  --organic-highlight: #3E5954;
   --organic-white: #FFFFFF;
+  
+  /* Nyano Brand Colors */
+  --nyano-cream: #F5F1ED;
+  --nyano-terracotta: #D9734E;
+  --nyano-forest: #3E5954;
+  --nyano-brown: #4A403A;
+  --nyano-marigold: #F2B705;
 }
 
 @layer base {
   body {
-    font-family: 'Inter', sans-serif;
-    background: var(--organic-background);
-    color: var(--organic-text);
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--nyano-cream);
+    color: var(--nyano-brown);
     min-height: 100vh;
   }
   
@@ -112,8 +116,69 @@
     animation-delay: 0.4s;
   }
 
+  /* Creative animations for hero text */
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+  
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+  
+  @keyframes glow {
+    from {
+      box-shadow: 0 0 5px rgba(242, 183, 5, 0.3);
+    }
+    to {
+      box-shadow: 0 0 20px rgba(242, 183, 5, 0.6), 0 0 30px rgba(242, 183, 5, 0.4);
+    }
+  }
+
   /* Backdrop blur utilities */
   .backdrop-blur-xs {
     backdrop-filter: blur(2px);
+  }
+  
+  /* Hide scrollbar for horizontal scroll */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Ensure horizontal scroll works properly */
+  .min-w-max {
+    min-width: max-content;
+  }
+
+  /* Smooth swipe animations */
+  .swipe-container {
+    touch-action: pan-y pinch-zoom;
+  }
+  
+  .swipe-item {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  /* Enhanced loading animation */
+  @keyframes shimmer {
+    0% {
+      background-position: -468px 0;
+    }
+    100% {
+      background-position: 468px 0;
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out infinite;
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 400% 100%;
   }
 }

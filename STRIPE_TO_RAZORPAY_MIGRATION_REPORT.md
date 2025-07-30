@@ -2,7 +2,7 @@
 
 ## 📋 **Migration Status: COMPLETE**
 
-This report documents the complete migration from Stripe to Razorpay payment integration in the Ramro e-commerce application.
+This report documents the complete migration from Stripe to Razorpay payment integration in the Ramro e-commerce application using Firebase as the backend.
 
 ---
 

@@ -1,8 +1,8 @@
-# 🏔️ Razorpay Integration Guide for Ramro E-commerce
+# 🏔️ Razorpay Integration Guide for Ramro E-commerce (Firebase Backend)
 
 ## 📋 **Complete Implementation Guide**
 
-This guide provides step-by-step instructions for implementing Razorpay payment gateway in your Ramro e-commerce application, replacing the previous Stripe integration.
+This guide provides step-by-step instructions for implementing Razorpay payment gateway in your Firebase-powered Ramro e-commerce application, replacing the previous Stripe integration.
 
 ---
 

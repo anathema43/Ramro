@@ -1,15 +1,10 @@
-// src/store/userStore.js
-import { create } from "zustand";
+// This file has been deprecated and merged into authStore.js
+// All user-related functionality is now handled by authStore.js
+// This file is kept for reference but should not be used
 
-export const useUserStore = create((set, get) => ({
-  wishlist: [],
-  toggleWishlist: (productId) => {
-    const { wishlist } = get();
-    if (wishlist && wishlist.includes(productId)) {
-      set({ wishlist: wishlist.filter((id) => id !== productId) });
-    } else {
-      set({ wishlist: [...(wishlist || []), productId] });
-    }
-  },
-  clearWishlist: () => set({ wishlist: [] }),
-}));
+export const deprecatedUserStore = {
+  message: "This store has been deprecated. Use authStore.js instead."
+};
+
+// If you need user-related functionality, import from authStore:
+// import { useAuthStore } from './authStore';

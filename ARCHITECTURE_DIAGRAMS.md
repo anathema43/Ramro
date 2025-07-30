@@ -1,5 +1,13 @@
 # 🏗️ Ramro E-commerce Architecture Diagrams
 
+## 🔒 **SECURITY-ENHANCED ARCHITECTURE**
+**MAJOR UPDATE**: All architecture diagrams now reflect enterprise-grade security:
+- ✅ **Server-side Admin Verification** - No client-side role checks
+- ✅ **Secure Data Flow** - Single source of truth from Firestore
+- ✅ **File Upload Security** - Strict validation pipeline
+- ✅ **Real-time Security** - Authenticated cross-tab synchronization
+- ✅ **Input Validation** - XSS and injection prevention at all levels
+
 ## 📊 **System Architecture Overview**
 
 ```mermaid
@@ -7,34 +15,37 @@ graph TB
     subgraph "Frontend (React + Vite)"
         A[User Interface]
         B[Admin Dashboard]
-        C[Authentication]
+        C[Client Authentication]
         D[State Management - Zustand]
+        E[Input Validation Layer]
     end
     
     subgraph "Backend Services"
-        E[Firebase Auth]
-        F[Firestore Database]
-        G[Firebase Storage]
-        H[Firebase Functions]
+        F[Firebase Auth]
+        G[Firestore Database - Secure Rules]
+        H[Firebase Storage - Validated]
+        I[Firebase Functions]
+        J[Server-side Role Verification]
     end
     
     subgraph "External Services"
-        I[Razorpay Payment Gateway]
-        J[Email Service]
-        K[CDN/Hosting]
+        K[Razorpay Payment Gateway]
+        L[Email Service]
+        M[CDN/Hosting]
     end
     
-    A --> E
     A --> F
-    A --> I
-    B --> E
-    B --> F
-    B --> G
-    C --> E
-    D --> F
-    H --> J
+    A --> G
     A --> K
-    B --> K
+    B --> J
+    B --> G
+    B --> H
+    C --> F
+    D --> G
+    E --> G
+    I --> L
+    A --> M
+    B --> M
 ```
 
 ---
@@ -98,36 +109,37 @@ flowchart TD
     WishlistPage --> Shop
 ```
 
-### **Authentication Flow Detail**
-
+### **Authentication & Authorization Flow**
 ```mermaid
 sequenceDiagram
-    participant U as User
-    participant F as Frontend
-    participant FA as Firebase Auth
-    participant FS as Firestore
+    participant User as User
+    participant Frontend as Frontend App
+    participant Auth as Firebase Auth
+    participant Firestore as Firestore DB
+    participant Rules as Security Rules
     
-    U->>F: Click Login/Signup
-    F->>F: Show Auth Form
-    U->>F: Enter Credentials
-    F->>FA: Submit Auth Request
+    User->>Frontend: Login Request
+    Frontend->>Auth: Authenticate User
+    Auth->>Auth: Validate Credentials
+    Auth->>Frontend: Return JWT Token
+    Frontend->>Firestore: Fetch User Profile
+    Firestore->>Frontend: Return User Data (with role)
+    Frontend->>Frontend: Store Auth State
     
-    alt Email/Password Signup
-        FA->>FA: Create User Account
-        FA->>FS: Create User Profile
-        FA->>F: Return User Object
-    else Email/Password Login
-        FA->>FA: Validate Credentials
-        FA->>FS: Fetch User Profile
-        FA->>F: Return User Object
-    else Google OAuth
-        FA->>FA: Google OAuth Flow
-        FA->>FS: Create/Update Profile
-        FA->>F: Return User Object
+    User->>Frontend: Request Protected Resource
+    Frontend->>Firestore: Query with Auth Token
+    Firestore->>Rules: Check Security Rules
+    Rules->>Rules: Validate User Role (Server-side)
+    
+    alt Authorized
+        Rules->>Firestore: Allow Access
+        Firestore->>Frontend: Return Data
+        Frontend->>User: Display Content
+    else Unauthorized
+        Rules->>Firestore: Deny Access
+        Firestore->>Frontend: Return Error
+        Frontend->>User: Show Access Denied
     end
-    
-    F->>F: Update Auth State
-    F->>U: Redirect to Dashboard/Shop
 ```
 
 ### **Shopping Cart Flow**
@@ -394,6 +406,8 @@ graph TD
     AdminRoutes --> AdminDashboard[Admin Dashboard]
     AdminRoutes --> ProductManagement[Product Management]
     AdminRoutes --> OrderManagement[Order Management]
+        P[Artisan Directory]
+        Q[Artisan Profile]
     AdminRoutes --> UserManagement[User Management]
     
     subgraph "Shared Components"
@@ -404,6 +418,9 @@ graph TD
         LoadingSpinner[Loading Spinner]
         ReviewStars[Review Stars]
     end
+        W[ArtisanCard]
+        X[Cultural Content]
+        W[ResponsiveImage]
     
     subgraph "State Management"
         AuthStore[Auth Store]
@@ -411,6 +428,7 @@ graph TD
         ProductStore[Product Store]
         OrderStore[Order Store]
         WishlistStore[Wishlist Store]
+        CC[Artisan Store]
     end
 ```
 

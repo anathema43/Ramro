@@ -1,11 +1,14 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
+import ResponsiveImage from "../components/ResponsiveImage";
 import { useProductStore } from "../store/productStore";
 import { useInventoryStore } from "../store/inventoryStore";
 import ReviewStars from "../components/ReviewStars";
 import WishlistButton from "../components/WishlistButton";
 import AddToCartButton from "../components/AddToCartButton";
-import ReviewSystem from "../components/ReviewSystem";
+import ReviewForm from "../components/ReviewForm";
+import ReviewList from "../components/ReviewList";
+import ReviewSummary from "../components/ReviewSummary";
 import formatCurrency from "../utils/formatCurrency";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
 
@@ -15,6 +18,7 @@ export default function ProductDetail() {
   const { trackProduct, untrackProduct } = useInventoryStore();
   const [product, setProduct] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [showReviewForm, setShowReviewForm] = React.useState(false);
 
   React.useEffect(() => {
     const fetchProduct = async () => {
@@ -94,10 +98,12 @@ export default function ProductDetail() {
       <div className="grid md:grid-cols-2 gap-12 mb-16">
         {/* Product Image */}
         <div className="relative">
-          <img 
+          <ResponsiveImage
             src={product.image} 
             alt={product.name} 
-            className="w-full h-96 object-cover rounded-lg shadow-lg"
+            className="w-full h-96 rounded-lg shadow-lg"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px"
+            priority={true} // This is the main product image
           />
           {product.quantityAvailable === 0 && (
             <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
@@ -182,8 +188,45 @@ export default function ProductDetail() {
       </div>
 
       {/* Reviews Section */}
-      <div className="mb-16">
-        <ReviewSystem productId={product.id} />
+      <div className="mb-16" data-cy="reviews-section">
+        <h2 className="text-2xl font-bold text-organic-text mb-6" data-cy="reviews-title">Customer Reviews</h2>
+        
+        <ReviewSummary productId={product.id} />
+        
+        <div className="mt-8">
+          {!showReviewForm ? (
+            <button
+              onClick={() => setShowReviewForm(true)}
+              className="bg-organic-primary text-white px-6 py-2 rounded-lg hover:opacity-90 mb-6"
+            >
+              Write a Review
+            </button>
+          ) : (
+            <div className="mb-6">
+              <ReviewForm 
+                productId={product.id} 
+                onReviewSubmitted={() => {
+                  setShowReviewForm(false);
+                  // Show success message
+                  const successDiv = document.createElement('div');
+                  successDiv.className = 'bg-green-100 text-green-700 p-4 rounded-lg mb-4';
+                  successDiv.setAttribute('data-cy', 'review-success');
+                  successDiv.textContent = 'Review submitted successfully!';
+                  document.querySelector('[data-cy="reviews-section"]').appendChild(successDiv);
+                  setTimeout(() => successDiv.remove(), 5000);
+                }}
+              />
+              <button
+                onClick={() => setShowReviewForm(false)}
+                className="text-gray-600 hover:text-gray-800 text-sm mt-2"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+        
+        <ReviewList productId={product.id} />
       </div>
 
       {/* Related Products */}

@@ -99,9 +99,10 @@ export const bundleOptimization = {
   // Preload critical resources
   preloadCriticalResources: () => {
     const criticalResources = [
-      '/api/products',
-      '/images/logo.png',
-      '/fonts/inter.woff2'
+      // Only preload resources that actually exist
+      // '/api/products', // Remove - we don't have this API yet
+      // '/images/logo.png', // Remove - we don't have this image
+      // '/fonts/inter.woff2' // Remove - loaded via Google Fonts
     ];
     
     criticalResources.forEach(resource => {
@@ -119,8 +120,8 @@ export const bundleOptimization = {
 export const freeErrorTracking = {
   logError: (error, context = {}) => {
     const errorData = {
-      message: error.message,
-      stack: error.stack,
+      message: error?.message || 'Unknown error message',
+      stack: error?.stack || 'No stack trace available',
       timestamp: new Date().toISOString(),
       url: window.location.href,
       userAgent: navigator.userAgent,
@@ -135,7 +136,7 @@ export const freeErrorTracking = {
     // Send to Firebase Analytics (free)
     if (typeof gtag !== 'undefined') {
       gtag('event', 'exception', {
-        description: error.message,
+        description: error?.message || 'Unknown error',
         fatal: false,
         custom_map: { context: JSON.stringify(context) }
       });
@@ -322,7 +323,8 @@ export const initializeCostOptimization = () => {
   
   // Set up error tracking
   window.addEventListener('error', (event) => {
-    freeErrorTracking.logError(event.error, {
+    const errorObj = event.error || new Error(event.message || 'Unknown error');
+    freeErrorTracking.logError(errorObj, {
       filename: event.filename,
       lineno: event.lineno,
       colno: event.colno
